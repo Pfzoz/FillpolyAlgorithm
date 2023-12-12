@@ -30,6 +30,9 @@ public:
     {
         this->window = window;
         this->renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+        int h, w;
+        SDL_GetWindowSize(window, &w, &h);
         if (this->renderer == NULL)
         {
             printf("O renderizador não pode ser inicializado. Encerrando...\n");
