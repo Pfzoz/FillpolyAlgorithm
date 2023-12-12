@@ -11,6 +11,7 @@ class Component
 public:
     int x = 0, y = 0;
     Component() {}
+    virtual void init(SDL_Renderer *renderer){};
     virtual void draw(SDL_Renderer *renderer){};
     virtual void destroy(){};
 };
@@ -38,6 +39,7 @@ public:
 
     void add_component(Component *component)
     {
+        component->init(renderer);
         this->components.push_back(component);
     }
 
@@ -59,7 +61,6 @@ public:
 
     void render()
     {
-        SDL_Surface *surface = SDL_GetWindowSurface(window);
         SDL_SetRenderDrawColor(renderer, fill_colors[0], fill_colors[1], fill_colors[2], fill_colors[3]);
         SDL_RenderFillRect(renderer, NULL);
         for (int i = 0; i < components.size(); i++)

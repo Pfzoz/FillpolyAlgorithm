@@ -8,7 +8,6 @@
 class Vertex : public Component
 {
 public:
-    int x = 0, y = 0;
     SDL_Color color = {0, 0, 0, 255};
 
     Vertex(int x, int y)

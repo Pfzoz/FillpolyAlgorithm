@@ -3,16 +3,20 @@
 #include <vector>
 #include "scene.hh"
 #include "geometry.hh"
+#include "menu.hh"
 
 const int SCREEN_WIDTH = 640, SCREEN_HEIGHT = 480;
+const int VW = SCREEN_WIDTH / 100, VH = SCREEN_HEIGHT / 100;
 const SDL_Color SDL_COLOR_WHITE = {255, 255, 255};
-const SDL_Color SDL_COLOR_BLACK = {0, 0, 0};
+const SDL_Color SDL_COLOR_BLACK = {0, 0, 0, 255};
+const SDL_Color SDL_COLOR_RED = {255, 0, 0, 255};
 
 Scene *main_scene;
 SDL_Window *main_window;
 
 int main(int argc, char *args[])
 {
+    // Resources Initialization
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
         printf("Não pode inicializar as funções gráficas do SDL. Encerrando...\n");
@@ -29,8 +33,10 @@ int main(int argc, char *args[])
     main_scene = new Scene(main_window);
     main_scene->fill(SDL_COLOR_WHITE);
     printf ("Scene Created!\n");
-    Vertex *my_vertex = new Vertex(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-    main_scene->add_component(my_vertex);
+    // U.I
+    Button *button = new Button("Jorge", 8*VW, 3*VW);
+    button->fill(SDL_COLOR_RED);
+    main_scene->add_component(button);
     // Main Loop
     bool quit = false;
     SDL_Event event;
