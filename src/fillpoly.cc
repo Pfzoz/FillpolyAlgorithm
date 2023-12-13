@@ -9,7 +9,7 @@
 const int SCREEN_WIDTH = 1920, SCREEN_HEIGHT = 1080;
 int current_scwidth = SCREEN_WIDTH, current_scheight = SCREEN_HEIGHT;
 const float vw = (float) SCREEN_WIDTH / 100, vh = (float) SCREEN_HEIGHT / 100;
-int cvw = vw, cvh = vh;
+float cvw = vw, cvh = vh;
 const SDL_Color SDL_COLOR_WHITE = {255, 255, 255, 255};
 const SDL_Color SDL_COLOR_BLACK = {0, 0, 0, 255};
 const SDL_Color SDL_COLOR_RED = {255, 0, 0, 255};
@@ -34,7 +34,8 @@ void set_positions()
 {
     canvas->x = 30*cvw;
     canvas->y = 5*cvh;
-    load_btn->y = 95*cvh;
+    canvas->set_dimensions(65*cvw, 90*cvh);
+    load_btn->y = 90*cvh;
     load_btn->x = 2*cvw;
 }
 
@@ -60,7 +61,7 @@ int main(int argc, char *args[])
     // Loading Assets
     load_assets();
     // U.I
-    canvas = new Canvas(65*vw, 65*vh);
+    canvas = new Canvas(65*vw, 80*vh);
     load_btn = new Button("Carregar Arquivo", 8*vw, 3*vh, default_font);
     load_btn->background_fit();
     load_btn->fill(SDL_COLOR_TRANSPARENT);
@@ -85,7 +86,7 @@ int main(int argc, char *args[])
                 {
                     if (load_btn->in_bounds(event.button.x, event.button.y))
                     {
-                        load_btn->set_dimensions(load_btn->get_width() + 1, load_btn->get_height());
+                        printf("Carregando arquivo...\n");
                     }
                 }
             }
@@ -96,9 +97,9 @@ int main(int argc, char *args[])
                     cvw = ((float) event.window.data1) / 100;
                     cvh = ((float) event.window.data2) / 100;
                     float new_ptratio = ((float) event.window.data1) / ((float) SCREEN_WIDTH);
-                    TTF_SetFontSize(default_font, 18*new_ptratio);
-                    load_btn->background_fit();
+                    TTF_SetFontSize(default_font, 22*new_ptratio);
                     set_positions();
+                    load_btn->background_fit(1*cvw, 1*cvh);
                 }
             }
         }

@@ -28,8 +28,7 @@ private:
         SDL_SetRenderDrawColor(renderer, fill_color.r, fill_color.g, fill_color.b, fill_color.a);
         SDL_RenderFillRect(renderer, NULL);
         SDL_SetRenderDrawColor(renderer, border_color.r, border_color.g, border_color.b, border_color.a);
-        SDL_Rect btn_rect = {x, y, width, height};
-        SDL_RenderDrawRect(renderer, &btn_rect);
+        SDL_RenderDrawRect(renderer, NULL);
         SDL_Rect dst_rect = {width / 2 - text_surface->w / 2, height / 2 - text_surface->h / 2, text_surface->w, text_surface->h};
         SDL_RenderCopy(renderer, text_texture, NULL, &dst_rect);
         SDL_SetRenderTarget(renderer, NULL);
