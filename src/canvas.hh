@@ -1,19 +1,23 @@
 #ifndef CANVAS_H
 #define CANVAS_H
 
+#include <math.h>
 #include "scene.hh"
 
 class Canvas : public Component
 {
 private:
-    int destroys = 0, creates = 0;
-    int width, height;
-    SDL_Texture *texture;
-    SDL_Renderer *renderer;
+    const int scaling = 128;
+    int x_res = 0, y_res = 0;
+    SDL_Rect geometry;
+    SDL_Texture *texture = NULL;
+    SDL_Renderer *renderer = NULL;
     SDL_Color border_color = {0, 0, 0, 255};
 
     void create_texture(SDL_Renderer *renderer)
     {
+        texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, x_res, y_res);
+        SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
         SDL_SetRenderTarget(renderer, texture);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
@@ -23,43 +27,39 @@ private:
     }
 
 public:
-    bool ready = false;
-
-    Canvas(int width, int height)
+    Canvas(float width, float height)
     {
-        this->width = width;
-        this->height = height;
+        this->set_geometry(0, 0, width, height);
     }
 
     void init(SDL_Renderer *renderer)
     {
         this->renderer = renderer;
-        creates++;
-        texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
-        SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
         create_texture(renderer);
-        ready = true;
     }
 
     void draw(SDL_Renderer *renderer)
     {
-        SDL_Rect dst_rect = {x, y, width, height};
-        SDL_RenderCopy(renderer, texture, NULL, &dst_rect);
+        SDL_RenderCopy(renderer, texture, NULL, &geometry);
     }
 
-    void set_dimensions(int width, int height)
+    void set_geometry(int x, int y, float width, float height)
     {
-        this->width = width;
-        this->height = height;
-        if (ready)
+        geometry.x = x;
+        geometry.y = y;
+        geometry.w = width;
+        geometry.h = height;
+        int new_x_res = round((width / scaling)) * scaling;
+        int new_y_res = round((height / scaling)) * scaling;
+        if (new_x_res != x_res || new_y_res != y_res)
         {
-            destroys++;
-            SDL_DestroyTexture(texture);
-            creates++;
-            printf("Creates: %i Destroys: %i\n", creates, destroys);
-            texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
-            SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-            create_texture(renderer);
+            x_res = new_x_res;
+            y_res = new_y_res;
+            if (texture != NULL)
+            {
+                SDL_DestroyTexture(texture);
+                create_texture(renderer);
+            }
         }
     }
 };

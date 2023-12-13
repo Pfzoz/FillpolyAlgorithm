@@ -9,10 +9,21 @@
 class Component
 {
 public:
-    int x = 0, y = 0;
+    SDL_Rect geometry;
     Component() {}
     virtual void init(SDL_Renderer *renderer){};
     virtual void draw(SDL_Renderer *renderer){};
+    virtual void set_geometry(int x, int y, float width, float height) {};
+    virtual void set_position(int x, int y)
+    {
+        geometry.x = x;
+        geometry.y = y;
+    }
+    virtual void set_dimensions(float width, float height)
+    {
+        geometry.w = width;
+        geometry.h = height;
+    }
     virtual void destroy(){};
 };
 
@@ -20,16 +31,16 @@ class Scene
 {
 private:
     std::vector<Component *> components;
-    SDL_Renderer *renderer;
+    SDL_Renderer *renderer = NULL;
     Uint8 fill_colors[4];
 
 public:
-    SDL_Window *window;
+    SDL_Window *window = NULL;
     Scene() {}
     Scene(SDL_Window *window)
     {
         this->window = window;
-        this->renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+        this->renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
         int h, w;
         SDL_GetWindowSize(window, &w, &h);
@@ -65,7 +76,7 @@ public:
     void render()
     {
         SDL_SetRenderDrawColor(renderer, fill_colors[0], fill_colors[1], fill_colors[2], fill_colors[3]);
-        SDL_RenderFillRect(renderer, NULL);
+        SDL_RenderClear(renderer);
         for (int i = 0; i < components.size(); i++)
         {
             components[i]->draw(renderer);
@@ -90,6 +101,7 @@ public:
             else
             {
                 SDL_DestroyWindow(window);
+                SDL_DestroyRenderer(renderer);
             }
         }
     }
