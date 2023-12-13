@@ -6,6 +6,7 @@
 class Canvas : public Component
 {
 private:
+    int destroys = 0, creates = 0;
     int width, height;
     SDL_Texture *texture;
     SDL_Renderer *renderer;
@@ -33,6 +34,7 @@ public:
     void init(SDL_Renderer *renderer)
     {
         this->renderer = renderer;
+        creates++;
         texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
         SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
         create_texture(renderer);
@@ -51,7 +53,10 @@ public:
         this->height = height;
         if (ready)
         {
+            destroys++;
             SDL_DestroyTexture(texture);
+            creates++;
+            printf("Creates: %i Destroys: %i\n", creates, destroys);
             texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
             SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
             create_texture(renderer);
