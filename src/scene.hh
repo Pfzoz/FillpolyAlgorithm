@@ -18,13 +18,21 @@ protected:
 public:
     int x_res = 0, y_res = 0;
     int scaling = 32;
-    SDL_Rect geometry;
+    SDL_Rect geometry = {0,0,0,0};
 
     Component() {}
     virtual void init(SDL_Renderer *renderer)
     {
         this->renderer = renderer;
         create_texture(renderer);
+    }
+    virtual void reload(SDL_Renderer *renderer)
+    {
+        if (texture != NULL)
+        {
+            SDL_DestroyTexture(texture);
+            create_texture(renderer);
+        }
     }
     virtual void draw(SDL_Renderer *renderer){};
     virtual void set_geometry(int x, int y, float width, float height)
