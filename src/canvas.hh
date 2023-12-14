@@ -7,11 +7,6 @@
 class Canvas : public Component
 {
 private:
-    const int scaling = 128;
-    int x_res = 0, y_res = 0;
-    SDL_Rect geometry;
-    SDL_Texture *texture = NULL;
-    SDL_Renderer *renderer = NULL;
     SDL_Color border_color = {0, 0, 0, 255};
 
     void create_texture(SDL_Renderer *renderer)
@@ -27,8 +22,10 @@ private:
     }
 
 public:
+
     Canvas(float width, float height)
     {
+        scaling = 64;
         this->set_geometry(0, 0, width, height);
     }
 
@@ -41,26 +38,6 @@ public:
     void draw(SDL_Renderer *renderer)
     {
         SDL_RenderCopy(renderer, texture, NULL, &geometry);
-    }
-
-    void set_geometry(int x, int y, float width, float height)
-    {
-        geometry.x = x;
-        geometry.y = y;
-        geometry.w = width;
-        geometry.h = height;
-        int new_x_res = round((width / scaling)) * scaling;
-        int new_y_res = round((height / scaling)) * scaling;
-        if (new_x_res != x_res || new_y_res != y_res)
-        {
-            x_res = new_x_res;
-            y_res = new_y_res;
-            if (texture != NULL)
-            {
-                SDL_DestroyTexture(texture);
-                create_texture(renderer);
-            }
-        }
     }
 };
 

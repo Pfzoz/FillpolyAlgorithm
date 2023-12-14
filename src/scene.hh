@@ -5,15 +5,47 @@
 #include <SDL2/SDL_image.h>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 class Component
 {
+protected:
+    SDL_Renderer *renderer = NULL;
+    SDL_Texture *texture = NULL;
+
+    virtual void create_texture(SDL_Renderer *renderer){};
+
 public:
+    int x_res = 0, y_res = 0;
+    int scaling = 32;
     SDL_Rect geometry;
+
     Component() {}
-    virtual void init(SDL_Renderer *renderer){};
+    virtual void init(SDL_Renderer *renderer)
+    {
+        this->renderer = renderer;
+        create_texture(renderer);
+    }
     virtual void draw(SDL_Renderer *renderer){};
-    virtual void set_geometry(int x, int y, float width, float height) {};
+    virtual void set_geometry(int x, int y, float width, float height)
+    {
+        geometry.x = x;
+        geometry.y = y;
+        geometry.w = width;
+        geometry.h = height;
+        int new_x_res = round((width / scaling)) * scaling;
+        int new_y_res = round((height / scaling)) * scaling;
+        if (new_x_res != x_res || new_y_res != y_res)
+        {
+            x_res = std::max<int>(new_x_res, scaling);
+            y_res = std::max<int>(new_y_res, scaling);
+            if (texture != NULL)
+            {
+                SDL_DestroyTexture(texture);
+                create_texture(renderer);
+            }
+        }
+    }
     virtual void set_position(int x, int y)
     {
         geometry.x = x;
@@ -23,8 +55,23 @@ public:
     {
         geometry.w = width;
         geometry.h = height;
+        int new_x_res = round((width / scaling)) * scaling;
+        int new_y_res = round((height / scaling)) * scaling;
+        if (new_x_res != x_res || new_y_res != y_res)
+        {
+            x_res = std::max<int>(new_x_res, scaling);
+            y_res = std::max<int>(new_y_res, scaling);
+            if (texture != NULL)
+            {
+                SDL_DestroyTexture(texture);
+                create_texture(renderer);
+            }
+        }
     }
-    virtual void destroy(){};
+    virtual void destroy()
+    {
+        SDL_DestroyTexture(texture);
+    }
 };
 
 class Scene

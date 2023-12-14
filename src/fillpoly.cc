@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <vector>
+#include <algorithm>
 #include "scene.hh"
 #include "geometry.hh"
 #include "menu.hh"
@@ -20,6 +21,7 @@ Scene *main_scene;
 SDL_Window *main_window;
 TTF_Font *default_font;
 Button *save_btn, *load_btn;
+Label *message_text;
 Canvas *canvas;
 
 void load_assets()
@@ -34,8 +36,18 @@ void load_assets()
 void set_positions()
 {
     canvas->set_geometry(30 * cvw, 5 * cvh, 65 * cvw, 90 * cvh);
-    load_btn->set_position(2*cvw, 90*cvh);
-    load_btn->background_fit();
+    float new_ptsize = (25 / (float) (SCREEN_WIDTH + SCREEN_HEIGHT)) * (float) (current_scwidth + current_scheight);
+    load_btn->ptsize = new_ptsize;
+    save_btn->ptsize = new_ptsize;
+    message_text->set_ptsize(new_ptsize);
+    load_btn->background_fit(2*cvw, 1*cvh);
+    save_btn->background_fit(2*cvw, 1*cvh);
+    float btns_gap = 1.5*cvw;
+    float btns_size = load_btn->geometry.w+save_btn->geometry.w+btns_gap;
+    float btns_pos = (30*cvw)/2;
+    load_btn->set_position(btns_pos-btns_size/2, 90*cvh);
+    save_btn->set_position(load_btn->geometry.x+load_btn->geometry.w+btns_gap, 90*cvh);
+    message_text->set_position(30*cvw + 65*cvw/2 - message_text->geometry.w / 2, 95*cvh);
 }
 
 int main(int argc, char *args[])
@@ -61,13 +73,17 @@ int main(int argc, char *args[])
     load_assets();
     // U.I
     canvas = new Canvas(65 * vw, 80 * vh);
+    save_btn = new Button("Salvar Arquivo", 8 * vw, 3 * vh, default_font);
     load_btn = new Button("Carregar Arquivo", 8 * vw, 3 * vh, default_font);
+    message_text = new Label("Clique para começar a criar um polígono!", 8 * vw, 3 * vh, default_font);
     load_btn->fill(SDL_COLOR_TRANSPARENT);
-    TTF_SetFontSize(default_font, 22);
+    save_btn->fill(SDL_COLOR_TRANSPARENT);
     set_positions();
     // Creating Components
     main_scene->add_component(canvas);
     main_scene->add_component(load_btn);
+    main_scene->add_component(save_btn);
+    main_scene->add_component(message_text);
     // Main Loop
     bool quit = false;
     SDL_Event event;
