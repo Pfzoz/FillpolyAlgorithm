@@ -143,6 +143,20 @@ public:
     {
         this->font = font;
     }
+
+    void reload(SDL_Renderer *renderer)
+    {
+        int new_width, new_height;
+        TTF_SetFontSize(font, ptsize);
+        TTF_SizeText(font, text_content.c_str(), &new_width, &new_height);
+        set_dimensions(new_width, new_height);
+    }
+
+    void set_text_content(std::string text_content)
+    {
+        this->text_content = text_content;
+        this->reload(renderer);
+    }
 };
 
 class DialogBox : public Component

@@ -79,10 +79,11 @@ int main(int argc, char *args[])
     canvas = new Canvas(65 * vw, 80 * vh);
     save_btn = new Button("Salvar Arquivo", 8 * vw, 3 * vh, default_font);
     load_btn = new Button("Carregar Arquivo", 8 * vw, 3 * vh, default_font);
-    message_text = new Label("Clique para começar a criar um polígono!", 8 * vw, 3 * vh, default_font);
+    message_text = new Label("Clique com o botão direito para começar a criar um polígono!", 8 * vw, 3 * vh, default_font);
     dialog = new DialogBox("", 25, default_font, 8 * vw, 3 * vh);
     load_btn->fill(SDL_COLOR_TRANSPARENT);
     save_btn->fill(SDL_COLOR_TRANSPARENT);
+    canvas->thickness = 3;
     set_positions();
     // Creating Components
     main_scene->add_component(canvas);
@@ -91,7 +92,9 @@ int main(int argc, char *args[])
     main_scene->add_component(message_text);
     main_scene->add_component(dialog);
     // Main Loop
+    bool drawing = false;
     bool quit = false;
+    int points_drawn = 0;
     SDL_Event event;
     DialogBox *focus_dialog;
     SDL_StopTextInput();
@@ -116,6 +119,38 @@ int main(int argc, char *args[])
                     {
                         SDL_StopTextInput();
                         focus_dialog = NULL;
+                    }
+                    else if (canvas->in_bounds(event.button.x, event.button.y))
+                    {
+                        if (!drawing)
+                        {
+                            drawing = true;
+                            points_drawn++;
+                            canvas->open_polygon(event.button.x, event.button.y);
+                            message_text->set_text_content("Clique com o botão esquerdo para fechar o polígono (É necessário 2 arestas)");
+                        }
+                        else
+                        {
+                            canvas->draw_polygon(event.button.x, event.button.y);
+                            points_drawn++;
+                        }
+                    }
+                }
+                else if (event.button.button == SDL_BUTTON_RIGHT)
+                {
+                    if (drawing)
+                    {
+                        if (points_drawn > 2)
+                        {
+                            canvas->close_polygon(event.button.x, event.button.y);
+                            points_drawn = 0;
+                            drawing = false;
+                            message_text->set_text_content("Clique com o botão direito para começar a criar um polígono!");
+                        }
+                        else
+                        {
+                            message_text->set_text_content("É necessário mais de duas arestas para criar um polígono!");
+                        }
                     }
                 }
             }

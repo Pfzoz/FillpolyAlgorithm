@@ -16,9 +16,10 @@ protected:
     virtual void create_texture(SDL_Renderer *renderer){};
 
 public:
+    bool visible = true;
     int x_res = 0, y_res = 0;
     int scaling = 32;
-    SDL_Rect geometry = {0,0,0,0};
+    SDL_Rect geometry = {0, 0, 0, 0};
 
     Component() {}
     virtual void init(SDL_Renderer *renderer)
@@ -39,20 +40,7 @@ public:
     {
         geometry.x = x;
         geometry.y = y;
-        geometry.w = width;
-        geometry.h = height;
-        int new_x_res = round((width / scaling)) * scaling;
-        int new_y_res = round((height / scaling)) * scaling;
-        if (new_x_res != x_res || new_y_res != y_res)
-        {
-            x_res = std::max<int>(new_x_res, scaling);
-            y_res = std::max<int>(new_y_res, scaling);
-            if (texture != NULL)
-            {
-                SDL_DestroyTexture(texture);
-                create_texture(renderer);
-            }
-        }
+        set_dimensions(width, height);
     }
     virtual void set_position(int x, int y)
     {
@@ -132,9 +120,10 @@ public:
     {
         SDL_SetRenderDrawColor(renderer, fill_colors[0], fill_colors[1], fill_colors[2], fill_colors[3]);
         SDL_RenderClear(renderer);
-        for (int i = 0; i < components.size(); i++)
+        for (Component *component : components)
         {
-            components[i]->draw(renderer);
+            if (component->visible)
+                component->draw(renderer);
         }
         SDL_RenderPresent(renderer);
     }
