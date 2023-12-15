@@ -50,7 +50,7 @@ public:
         SDL_RenderCopy(renderer, texture, NULL, &geometry);
         for (Vertex *vertex : vertices)
         {
-            SDL_SetRenderDrawColor(renderer, vertex->color.r, vertex->color.b, vertex->color.g, vertex->color.a);
+            SDL_SetRenderDrawColor(renderer, vertex->color.r, vertex->color.g, vertex->color.b, vertex->color.a);
             for (int i = 0; i < vertex->thickness; i++)
             {
                 for (int j = vertex->x - i; j < (vertex->x + i); j++)
@@ -109,7 +109,7 @@ public:
         }
     }
 
-    void open_polygon(int x, int y)
+    void open_polygon(int x, int y, SDL_Color color = {0,0,0,255})
     {
         if (creating_polygon)
         {
@@ -118,11 +118,12 @@ public:
         }
         this->creating_polygon = true;
         first = new Vertex(x - geometry.x, y - geometry.y);
+        first->color = color;
         first->thickness = thickness;
         this->vertices.push_back(first);
     }
 
-    void draw_polygon(int x, int y)
+    void draw_polygon(int x, int y, SDL_Color color = {0,0,0,255})
     {
         if (!creating_polygon)
         {
@@ -131,13 +132,14 @@ public:
         }
         Vertex *vertex = new Vertex(x - geometry.x, y - geometry.y);
         vertex->thickness = thickness;
+        vertex->color = color;
         vertices.push_back(vertex);
         Edge *edge = new Edge(vertices[vertices.size() - 2], vertices[vertices.size() - 1]);
         edges.push_back(edge);
         temp_edges.push_back(edge);
     }
 
-    void close_polygon(int x, int y)
+    void close_polygon()
     {
         if (!creating_polygon)
         {

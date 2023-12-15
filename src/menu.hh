@@ -203,6 +203,9 @@ private:
     }
 
 public:
+    bool focused = false;
+    bool digits_only = false;
+
     DialogBox(std::string text_content, int ptsize, TTF_Font *font, float width, float height)
     {
         scaling = 2;
@@ -241,6 +244,57 @@ public:
     bool in_bounds(int x, int y)
     {
         return x >= geometry.x && y >= geometry.y && x <= (geometry.x + geometry.w) && y <= (geometry.y + geometry.h) ? true : false;
+    }
+
+    void on_click(int x, int y)
+    {
+        if (in_bounds(x, y))
+        {
+            if (focused)
+            {
+                SDL_StopTextInput();
+                focused = false;
+            }
+            else
+            {
+                if (!SDL_IsTextInputActive())
+                    SDL_StartTextInput();
+                focused = true;
+            }
+        }
+        else
+        {
+            focused = false;
+        }
+    }
+
+    void key_down(SDL_Keycode sym)
+    {
+        if (focused)
+        {
+            if (sym == SDLK_BACKSPACE && text_content.length() > 0)
+            {
+                text_content.pop_back();
+                reload(renderer);
+            }
+        }
+    }
+
+    void text_input(SDL_TextInputEvent event)
+    {
+        if (focused)
+        {
+            if (digits_only && std::isdigit(event.text[0]))
+            {
+                text_content.push_back(event.text[0]);
+                reload(renderer);
+            }
+            else if (!digits_only)
+            {
+                text_content.push_back(event.text[0]);
+                reload(renderer);
+            }
+        }
     }
 };
 

@@ -22,7 +22,7 @@ SDL_Window *main_window;
 TTF_Font *default_font;
 Button *save_btn, *load_btn;
 Label *message_text;
-DialogBox *dialog;
+DialogBox *dialog_red, *dialog_blue, *dialog_green;
 Canvas *canvas;
 
 void load_assets()
@@ -40,8 +40,12 @@ void set_positions()
     float new_ptsize = (25 / (float)(SCREEN_WIDTH + SCREEN_HEIGHT)) * (float)(current_scwidth + current_scheight);
     load_btn->ptsize = new_ptsize;
     save_btn->ptsize = new_ptsize;
-    dialog->set_ptsize(new_ptsize);
-    dialog->set_dimensions(12*cvw, 5*cvh);
+    dialog_red->set_ptsize(new_ptsize);
+    dialog_red->set_dimensions(12*cvw, 5*cvh);
+    dialog_green->set_ptsize(new_ptsize);
+    dialog_green->set_dimensions(12*cvw, 5*cvh);
+    dialog_blue->set_ptsize(new_ptsize);
+    dialog_blue->set_dimensions(12*cvw, 5*cvh);
     message_text->set_ptsize(new_ptsize);
     load_btn->background_fit(2 * cvw, 1 * cvh);
     save_btn->background_fit(2 * cvw, 1 * cvh);
@@ -50,7 +54,9 @@ void set_positions()
     float btns_pos = (30 * cvw) / 2;
     load_btn->set_position(btns_pos - btns_size / 2, 90 * cvh);
     save_btn->set_position(load_btn->geometry.x + load_btn->geometry.w + btns_gap, 90 * cvh);
-    dialog->set_position(0, 50 * cvh);
+    dialog_red->set_position(0, 50 * cvh);
+    dialog_green->set_position(dialog_red->geometry.x + dialog_red->geometry.w, 50*cvh);
+    dialog_blue->set_position(dialog_green->geometry.x + dialog_green->geometry.w, 50*cvh);
     message_text->set_position(30 * cvw + 65 * cvw / 2 - message_text->geometry.w / 2, 95 * cvh);
 }
 
@@ -80,7 +86,12 @@ int main(int argc, char *args[])
     save_btn = new Button("Salvar Arquivo", 8 * vw, 3 * vh, default_font);
     load_btn = new Button("Carregar Arquivo", 8 * vw, 3 * vh, default_font);
     message_text = new Label("Clique com o botão direito para começar a criar um polígono!", 8 * vw, 3 * vh, default_font);
-    dialog = new DialogBox("", 25, default_font, 8 * vw, 3 * vh);
+    dialog_red = new DialogBox("", 25, default_font, 8 * vw, 3 * vh);
+    dialog_blue = new DialogBox("", 25, default_font, 8 * vw, 3 * vh);
+    dialog_green = new DialogBox("", 25, default_font, 8 * vw, 3 * vh);
+    dialog_red->digits_only = true;
+    dialog_green->digits_only = true;
+    dialog_blue->digits_only = true;
     load_btn->fill(SDL_COLOR_TRANSPARENT);
     save_btn->fill(SDL_COLOR_TRANSPARENT);
     canvas->thickness = 3;
@@ -90,7 +101,9 @@ int main(int argc, char *args[])
     main_scene->add_component(load_btn);
     main_scene->add_component(save_btn);
     main_scene->add_component(message_text);
-    main_scene->add_component(dialog);
+    main_scene->add_component(dialog_red);
+    main_scene->add_component(dialog_blue);
+    main_scene->add_component(dialog_green);
     // Main Loop
     bool drawing = false;
     bool quit = false;
@@ -110,28 +123,23 @@ int main(int argc, char *args[])
             {
                 if (event.button.button == SDL_BUTTON_LEFT)
                 {
-                    if (dialog->in_bounds(event.button.x, event.button.y) && !SDL_IsTextInputActive())
-                    {
-                        SDL_StartTextInput();
-                        focus_dialog = dialog;
-                    }
-                    else if (!dialog->in_bounds(event.button.x, event.button.y) && SDL_IsTextInputActive())
-                    {
-                        SDL_StopTextInput();
-                        focus_dialog = NULL;
-                    }
-                    else if (canvas->in_bounds(event.button.x, event.button.y))
+                    dialog_red->on_click(event.button.x, event.button.y);
+                    dialog_green->on_click(event.button.x, event.button.y);
+                    dialog_blue->on_click(event.button.x, event.button.y);
+                    if (canvas->in_bounds(event.button.x, event.button.y))
                     {
                         if (!drawing)
                         {
                             drawing = true;
                             points_drawn++;
-                            canvas->open_polygon(event.button.x, event.button.y);
+                            SDL_Color color = {std::stoi(dialog_red->get_text_content()), std::stoi(dialog_green->get_text_content()), std::stoi(dialog_blue->get_text_content()), 255};
+                            canvas->open_polygon(event.button.x, event.button.y, color);
                             message_text->set_text_content("Clique com o botão esquerdo para fechar o polígono (É necessário 2 arestas)");
                         }
                         else
                         {
-                            canvas->draw_polygon(event.button.x, event.button.y);
+                            SDL_Color color = {std::stoi(dialog_red->get_text_content()), std::stoi(dialog_green->get_text_content()), std::stoi(dialog_blue->get_text_content()), 255};
+                            canvas->draw_polygon(event.button.x, event.button.y, color);
                             points_drawn++;
                         }
                     }
@@ -142,7 +150,7 @@ int main(int argc, char *args[])
                     {
                         if (points_drawn > 2)
                         {
-                            canvas->close_polygon(event.button.x, event.button.y);
+                            canvas->close_polygon();
                             points_drawn = 0;
                             drawing = false;
                             message_text->set_text_content("Clique com o botão direito para começar a criar um polígono!");
@@ -167,21 +175,15 @@ int main(int argc, char *args[])
             }
             else if (event.type == SDL_KEYDOWN)
             {
-                if (SDL_IsTextInputActive())
-                {
-                    if (event.key.keysym.sym == SDLK_BACKSPACE && focus_dialog->get_text_content().length() > 0)
-                    {
-                        std::string new_text = focus_dialog->get_text_content();
-                        new_text.pop_back();
-                        focus_dialog->update(new_text);
-                    }
-                }
+                dialog_red->key_down(event.key.keysym.sym);
+                dialog_blue->key_down(event.key.keysym.sym);
+                dialog_green->key_down(event.key.keysym.sym);
             }
             else if (event.type == SDL_TEXTINPUT)
             {
-                std::string new_text = focus_dialog->get_text_content();
-                new_text.push_back(event.text.text[0]);
-                focus_dialog->update(new_text);
+                dialog_red->text_input(event.text);
+                dialog_green->text_input(event.text);
+                dialog_blue->text_input(event.text);
             }
         }
         main_scene->render();
