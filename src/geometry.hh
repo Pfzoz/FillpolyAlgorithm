@@ -13,14 +13,14 @@ int g_pname_serializer = 0;
 class Vertex
 {
 public:
-    int x, y;
+    float x, y;
     int thickness = 1;
     std::string name;
     SDL_Color color = {0, 0, 0, 255};
 
     Vertex(){}
 
-    Vertex(int x, int y, std::string name = "")
+    Vertex(float x, float y, std::string name = "")
     {
         if (name == "")
         {
@@ -37,7 +37,7 @@ class Edge
 public:
     Vertex *a, *b;
     std::string name;
-    int y_min, x_y_min, y_max, m_inversed;
+    float y_min, x_y_min, y_max, m_inversed;
 
     Edge(Vertex *a, Vertex *b, std::string name = "")
     {
