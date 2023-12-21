@@ -139,6 +139,12 @@ public:
         current_vertices = 0;
     }
 
+    void get_vertex_pos(Vertex *vertex, int *x, int *y)
+    {
+        *x = (int)((vertex->x * (float)geometry.w) + (float)geometry.x);
+        *y = (int)((vertex->y * (float)geometry.h) + (float)geometry.y);
+    }
+
     Vertex *first_vertex_touched(float x, float y, float square_area = 0)
     {
         if (square_area <= 0)

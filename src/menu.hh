@@ -162,18 +162,13 @@ public:
         this->text_color = color;
     }
 
-    void reload(SDL_Renderer *renderer)
-    {
-        int new_width, new_height;
-        TTF_SetFontSize(font, ptsize);
-        TTF_SizeText(font, text_content.c_str(), &new_width, &new_height);
-        set_dimensions(new_width, new_height);
-    }
-
-    void set_text_content(std::string text_content)
+    void update_text(std::string text_content)
     {
         this->text_content = text_content;
-        this->reload(renderer);
+        TTF_SetFontSize(font, ptsize);
+        TTF_SizeText(font, text_content.c_str(), &geometry.w, &geometry.h);
+        rescale(geometry.w, geometry.h);
+        reload(renderer);
     }
 };
 
@@ -316,20 +311,33 @@ public:
         this->onkeydown_callback(sym);
     }
 
-    void onclick(int x, int y)
+    void onclick(int x, int y, bool hit = true)
     {
-        if (in_bounds(x, y))
+        if (hit)
         {
             focused = !focused;
-            this->onclick_callback(x, y);
+            this->onclick_callback(x, y, hit);
             reload(renderer);
         }
-        else if (focused)
+        else 
         {
             focused = false;
+            this->onclick_callback(x, y, hit);
             reload(renderer);
         }
+
     }
+
+    bool is_visible() { return visible; }
+
+    void set_visible(bool visibility)
+    {
+        visible = visibility;
+        if (!visible)
+            focused = false;
+            reload(renderer);
+    }
+
 
     void ontextinput(SDL_TextInputEvent event, Component *target)
     {
