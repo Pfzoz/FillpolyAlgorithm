@@ -95,6 +95,10 @@ void canvas_onmiddle_click(int x, int y, bool hit)
             vertex_red->update_text(std::to_string(selected->color.r));
             vertex_red->set_visible(true);
         }
+        else
+        {
+            vertex_red->set_visible(false);
+        }
     }
 }
 
