@@ -140,6 +140,10 @@ public:
             }
         }
     }
+    virtual void rescale()
+    {
+        rescale(geometry.w, geometry.h);
+    }
     virtual bool in_bounds(int x, int y)
     {
         return x >= geometry.x && y >= geometry.y && x <= (geometry.x + geometry.w) && y <= (geometry.y + geometry.h) ? true : false;
@@ -154,6 +158,15 @@ public:
         this->reload(renderer);
     }
     virtual bool is_visible() { return visible; }
+};
+
+class ComponentCollection {
+private:
+
+public:
+    std::vector<Component *> components;
+
+    virtual void update_geometry() {};
 };
 
 class Scene
@@ -182,6 +195,12 @@ public:
             printf("O renderizador não pode ser inicializado. Encerrando...\n");
             std::exit(1);
         }
+    }
+
+    void add_collection(ComponentCollection *collection)
+    {
+        for (Component *component : collection->components)
+            add_component(component);
     }
 
     void add_component(Component *component)

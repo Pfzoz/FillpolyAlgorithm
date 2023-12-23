@@ -4,8 +4,8 @@
 #include <SDL2/SDL.h>
 #include <math.h>
 #include <vector>
-#include "scene.hh"
-#include "geometry.hh"
+#include "../scene.hh"
+#include "../geometry.hh"
 
 class Canvas : public Component
 {

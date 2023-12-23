@@ -4,8 +4,8 @@
 #include <algorithm>
 #include "scene.hh"
 #include "geometry.hh"
-#include "menu.hh"
-#include "canvas.hh"
+#include "menu/menu.hh"
+#include "collections/ceditor.hh"
 
 // Vars
 const int SCREEN_WIDTH = 1920, SCREEN_HEIGHT = 1080;
@@ -22,8 +22,8 @@ Scene *main_scene;
 SDL_Window *main_window;
 TTF_Font *default_font;
 Button *save_btn, *load_btn;
-Label *message_text, *red_text, *green_text, *blue_text;
-DialogBox *dialog_red, *dialog_blue, *dialog_green;
+Label *message_text;
+CEditor ceditor;
 DialogBox *vertex_red, *vertex_green, *vertex_blue;
 Canvas *canvas;
 
@@ -50,19 +50,16 @@ void resize(int width, int height)
     float dialogs_area = 18 * cvw;
     float dialogs_gap = 1 * cvw;
     float dialogs_y = 90 * cvh;
-    dialog_red->set_geometry(5 * cvw, dialogs_y, (dialogs_area) / 3, 5 * cvh);
-    dialog_green->set_geometry(dialog_red->geometry.x + dialog_red->geometry.w + dialogs_gap, dialogs_y, (dialogs_area) / 3, 5 * cvh);
-    dialog_blue->set_geometry(dialog_green->geometry.x + dialog_green->geometry.w + dialogs_gap, dialogs_y, (dialogs_area) / 3, 5 * cvh);
-    red_text->set_position(dialog_red->geometry.x + (dialog_red->geometry.w / 2) - red_text->geometry.w / 2, dialog_red->geometry.y - red_text->geometry.w);
+    ceditor.update_geometry((30 * cvw) / 2 - ceditor.geometry.w / 2, 90 * cvh, 18 * cvw, 10 * cvh);
     // Vertex
     vertex_red->set_dimensions(dialogs_area / 3, 5 * cvh);
 }
 
 void canvas_onclick(int x, int y, bool hit)
 {
-    if (hit)
+    if (hit && selected == NULL)
     {
-        SDL_Color color = {std::stoi(dialog_red->get_text_content()), std::stoi(dialog_green->get_text_content()), std::stoi(dialog_blue->get_text_content()), 255};
+        SDL_Color color = {std::stoi(ceditor.red_editor->get_text_content()), std::stoi(ceditor.green_editor->get_text_content()), std::stoi(ceditor.blue_editor->get_text_content()), 255};
         if (canvas->current_vertices == 0)
         {
             message_text->update_text("Clique com o botão direito para criar o polígono. (É necessário 3+ vértices)");
@@ -70,6 +67,11 @@ void canvas_onclick(int x, int y, bool hit)
         }
         else
             canvas->draw_polygon(x, y, color);
+    }
+    else if (hit && selected != NULL)
+    {
+        selected = NULL;
+        vertex_red->set_visible(false);
     }
 }
 
@@ -109,13 +111,6 @@ void handle_miss_click(int x, int y, bool hit)
         selected = NULL;
         vertex_red->set_visible(false);
     }
-}
-
-void handle_color_input(SDL_TextInputEvent event, Component *target)
-{
-    DialogBox *dialog = (DialogBox *)target;
-    if (std::stoi(dialog->get_text_content()) > 255)
-        dialog->update_text("255");
 }
 
 void handle_vertex_color_input(SDL_TextInputEvent event, Component *target)
@@ -159,29 +154,15 @@ int main(int argc, char *args[])
     /* Create Components */
     canvas = new Canvas(65 * VW, 90 * VH);
     message_text = new Label("Clique com o botão esquerdo para começar a desenhar um polígono.", default_font, 22);
-    dialog_red = new DialogBox("", 22, default_font, (18 * VW) / 3, 5 * VH);
-    dialog_green = new DialogBox("", 22, default_font, (18 * VW) / 3, 5 * VW);
-    dialog_blue = new DialogBox("", 22, default_font, (18 * VW) / 3, 5 * VW);
     vertex_red = new DialogBox("", 22, default_font, (18 * VW) / 3, 5 * VW);
-    red_text = new Label("RED", default_font, 22);
+    ceditor = CEditor((30 * VW) / 2 - ceditor.geometry.w / 2, 90 * cvw, 18 * VW, 10 * VH, default_font);
     resize(SCREEN_WIDTH, SCREEN_HEIGHT);
     /* Edit Components */
-    red_text->set_text_color(SDL_COLOR_RED);
     vertex_red->set_visible(false);
     vertex_red->z_index = 1;
     vertex_red->set_default_text("0");
     vertex_red->set_ontextinput(handle_vertex_color_input);
     vertex_red->set_onclick(handle_miss_click);
-    // Colors
-    dialog_red->digits_only = true;
-    dialog_green->digits_only = true;
-    dialog_blue->digits_only = true;
-    dialog_red->set_default_text("0");
-    dialog_green->set_default_text("0");
-    dialog_blue->set_default_text("0");
-    dialog_red->set_ontextinput(handle_color_input);
-    dialog_green->set_ontextinput(handle_color_input);
-    dialog_blue->set_ontextinput(handle_color_input);
     // Canvas
     canvas->set_onclick(canvas_onclick);
     canvas->set_onright_click(canvas_onright_click);
@@ -189,11 +170,8 @@ int main(int argc, char *args[])
     /* Add Components */
     main_scene->add_component(canvas);
     main_scene->add_component(message_text);
-    main_scene->add_component(dialog_red);
-    main_scene->add_component(dialog_green);
-    main_scene->add_component(dialog_blue);
-    main_scene->add_component(red_text);
     main_scene->add_component(vertex_red);
+    main_scene->add_collection(&ceditor);
     main_scene->onresize(resize);
     /* Main Loop */
     while (!main_scene->quit)
