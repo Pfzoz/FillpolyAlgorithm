@@ -5,5 +5,6 @@
 #include "label.hh"
 #include "button.hh"
 #include "canvas.hh"
+#include "colorwheel.hh"
 
 #endif

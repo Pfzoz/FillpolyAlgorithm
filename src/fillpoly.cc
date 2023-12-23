@@ -25,8 +25,8 @@ Button *save_btn, *load_btn;
 Label *message_text;
 CEditor ceditor;
 DialogBox *vertex_red, *vertex_green, *vertex_blue;
+ColorWheel *color_wheel;
 Canvas *canvas;
-
 Vertex *selected = NULL;
 
 void load_assets()
@@ -50,7 +50,9 @@ void resize(int width, int height)
     float dialogs_area = 18 * cvw;
     float dialogs_gap = 1 * cvw;
     float dialogs_y = 90 * cvh;
-    ceditor.update_geometry((30 * cvw) / 2 - ceditor.geometry.w / 2, 90 * cvh, 18 * cvw, 10 * cvh);
+    ceditor.update_geometry((30 * cvw) / 2 - ceditor.geometry.w / 2, 90 * cvh - 10 * cvh, 18 * cvw, 10 * cvh);
+    color_wheel->set_position(ceditor.geometry.x + (ceditor.geometry.w / 2) - color_wheel->geometry.w / 2, ceditor.geometry.y - color_wheel->geometry.h);
+    color_wheel->set_radius(5 * cvw);
     // Vertex
     vertex_red->set_dimensions(dialogs_area / 3, 5 * cvh);
 }
@@ -130,6 +132,21 @@ void handle_vertex_color_input(SDL_TextInputEvent event, Component *target)
     }
 }
 
+void handle_colorwheel_click(int x, int y, bool hit)
+{
+    if (hit)
+    {
+        int red = -1, green = -1, blue = -1;
+        color_wheel->get_color(x, y, &red, &green, &blue);
+        if (red != -1)
+        {
+            ceditor.red_editor->update_text(std::to_string(red));
+            ceditor.green_editor->update_text(std::to_string(green));
+            ceditor.blue_editor->update_text(std::to_string(blue));
+        }
+    }
+}
+
 int main(int argc, char *args[])
 {
     /* Resources Init */
@@ -155,7 +172,8 @@ int main(int argc, char *args[])
     canvas = new Canvas(65 * VW, 90 * VH);
     message_text = new Label("Clique com o botão esquerdo para começar a desenhar um polígono.", default_font, 22);
     vertex_red = new DialogBox("", 22, default_font, (18 * VW) / 3, 5 * VW);
-    ceditor = CEditor((30 * VW) / 2 - ceditor.geometry.w / 2, 90 * cvw, 18 * VW, 10 * VH, default_font);
+    ceditor = CEditor((30 * VW) / 2 - ceditor.geometry.w / 2, 90 * cvw - 10 * VH, 18 * VW, 10 * VH, default_font);
+    color_wheel = new ColorWheel(ceditor.geometry.x + (ceditor.geometry.w / 2) - (5 * VW) / 2, ceditor.geometry.y - 10 * VW, 5 * VW);
     resize(SCREEN_WIDTH, SCREEN_HEIGHT);
     /* Edit Components */
     vertex_red->set_visible(false);
@@ -167,11 +185,13 @@ int main(int argc, char *args[])
     canvas->set_onclick(canvas_onclick);
     canvas->set_onright_click(canvas_onright_click);
     canvas->set_onmiddle_click(canvas_onmiddle_click);
+    color_wheel->set_onclick(handle_colorwheel_click);
     /* Add Components */
     main_scene->add_component(canvas);
     main_scene->add_component(message_text);
     main_scene->add_component(vertex_red);
     main_scene->add_collection(&ceditor);
+    main_scene->add_component(color_wheel);
     main_scene->onresize(resize);
     /* Main Loop */
     while (!main_scene->quit)

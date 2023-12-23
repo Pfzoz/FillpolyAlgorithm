@@ -22,7 +22,7 @@ private:
     }
 
 public:
-    DialogBox *red_editor = NULL, *green_editor = NULL, *blue_editor = NULL;
+    DialogBox *red_editor = NULL, *green_editor = NULL, *blue_editor = NULL, *testrect = NULL;
     Label *red_label = NULL, *green_label = NULL, *blue_label = NULL;
     SDL_Rect geometry;
 
@@ -32,12 +32,13 @@ public:
     {
         geometry.x = x;
         geometry.y = y;
-        red_editor->set_position(geometry.x, geometry.y - geometry.h);
-        green_editor->set_position(red_editor->geometry.x + red_editor->geometry.w, geometry.y - geometry.h);
-        blue_editor->set_position(green_editor->geometry.x + green_editor->geometry.w, geometry.y - geometry.h);
-        red_label->set_position(red_editor->geometry.x + (red_editor->geometry.w / 2) - red_label->geometry.w / 2, red_editor->geometry.y - red_editor->geometry.h);
-        green_label->set_position(green_editor->geometry.x + (green_editor->geometry.w / 2) - green_label->geometry.w / 2, green_editor->geometry.y - green_editor->geometry.h);
-        blue_label->set_position(blue_editor->geometry.x + (blue_editor->geometry.w / 2) - red_label->geometry.w / 2, blue_editor->geometry.y - blue_editor->geometry.h);
+        float buttons_height = geometry.y + geometry.h / 2;
+        red_editor->set_position(geometry.x, buttons_height);
+        green_editor->set_position(red_editor->geometry.x + red_editor->geometry.w, buttons_height);
+        blue_editor->set_position(green_editor->geometry.x + green_editor->geometry.w, buttons_height);
+        red_label->set_position(red_editor->geometry.x + (red_editor->geometry.w / 2) - red_label->geometry.w / 2, geometry.y);
+        green_label->set_position(green_editor->geometry.x + (green_editor->geometry.w / 2) - green_label->geometry.w / 2, geometry.y);
+        blue_label->set_position(blue_editor->geometry.x + (blue_editor->geometry.w / 2) - red_label->geometry.w / 2, geometry.y);
     }
 
     void update_dimensions(int width, int height)
@@ -47,7 +48,6 @@ public:
         for (Component *component : components)
         {
             component->set_dimensions(width / 3, height / 2);
-            component->rescale();
         }
     }
 
