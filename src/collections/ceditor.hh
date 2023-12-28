@@ -5,7 +5,7 @@
 #include <string>
 #include <SDL2/SDL_ttf.h>
 #include <algorithm>
-#include "../scene.hh"
+#include "../scene/scene.hh"
 #include "../menu/menu.hh"
 
 class CEditor : public ComponentCollection

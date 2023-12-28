@@ -2,10 +2,10 @@
 #include <SDL2/SDL_ttf.h>
 #include <vector>
 #include <algorithm>
-#include "scene.hh"
+#include "scene/scene.hh"
 #include "geometry.hh"
 #include "menu/menu.hh"
-#include "collections/ceditor.hh"
+#include "collections/collections.hh"
 
 // Vars
 const int SCREEN_WIDTH = 1920, SCREEN_HEIGHT = 1080;
@@ -21,10 +21,11 @@ const SDL_Color SDL_COLOR_TRANSPARENT = {0, 0, 0, 0};
 Scene *main_scene;
 SDL_Window *main_window;
 TTF_Font *default_font;
-Button *save_btn, *load_btn;
-Label *message_text;
+Button *save_btn, *load_btn, *reset_btn;
+Label *message_text, *thickness_label;
 CEditor ceditor;
-DialogBox *vertex_red, *vertex_green, *vertex_blue;
+VEditor veditor;
+DialogBox *thickness_control;
 ColorWheel *color_wheel;
 Canvas *canvas;
 Vertex *selected = NULL;
@@ -54,27 +55,31 @@ void resize(int width, int height)
     color_wheel->set_position(ceditor.geometry.x + (ceditor.geometry.w / 2) - color_wheel->geometry.w / 2, ceditor.geometry.y - color_wheel->geometry.h);
     color_wheel->set_radius(5 * cvw);
     // Vertex
-    vertex_red->set_dimensions(dialogs_area / 3, 5 * cvh);
+    veditor.update_dimensions(18 * cvw, 10 * cvh);
+    // Menu
+    float menu_gap = 1 * cvh;
+    reset_btn->set_geometry((30 * cvw) / 2 - (10 * cvw) / 2, 50 * cvh, 10 * cvw, 5 * cvh);
+    thickness_control->set_dimensions(10 * cvw, 5 * cvh);
+    thickness_control->set_position(reset_btn->geometry.x + (reset_btn->geometry.w / 2) - thickness_control->geometry.w / 2, reset_btn->geometry.y - thickness_control->geometry.h - menu_gap);
+    thickness_label->set_position(thickness_control->geometry.x + thickness_control->geometry.w, thickness_control->geometry.y + (thickness_control->geometry.h / 2) - thickness_label->geometry.h / 2);
 }
 
 void canvas_onclick(int x, int y, bool hit)
 {
-    if (hit && selected == NULL)
+    if (hit && !veditor.is_selected())
     {
         SDL_Color color = {std::stoi(ceditor.red_editor->get_text_content()), std::stoi(ceditor.green_editor->get_text_content()), std::stoi(ceditor.blue_editor->get_text_content()), 255};
         if (canvas->current_vertices == 0)
         {
             message_text->update_text("Clique com o botão direito para criar o polígono. (É necessário 3+ vértices)");
+            message_text->set_position(canvas->geometry.x + (canvas->geometry.w / 2) - message_text->geometry.w / 2, 95 * cvh);
             canvas->open_polygon(x, y, color);
         }
         else
             canvas->draw_polygon(x, y, color);
     }
-    else if (hit && selected != NULL)
-    {
-        selected = NULL;
-        vertex_red->set_visible(false);
-    }
+    else if (hit && veditor.is_selected())
+        veditor.unselect();
 }
 
 void canvas_onright_click(int x, int y, bool hit)
@@ -82,6 +87,7 @@ void canvas_onright_click(int x, int y, bool hit)
     if (canvas->current_vertices > 2 && hit)
     {
         message_text->update_text("Clique com o botão esquerdo para começar a desenhar um polígono.");
+        message_text->set_position(canvas->geometry.x + (canvas->geometry.w / 2) - message_text->geometry.w / 2, 95 * cvh);
         canvas->close_polygon();
     }
 }
@@ -91,45 +97,22 @@ void canvas_onmiddle_click(int x, int y, bool hit)
     if (hit)
     {
         selected = canvas->first_vertex_touched(x, y, (c_screen_width + c_screen_height) * 0.012);
-        if (selected != NULL)
+        if (selected != NULL && veditor.vertex != selected)
         {
             int screen_x, screen_y;
             canvas->get_vertex_pos(selected, &screen_x, &screen_y);
-            vertex_red->set_position(screen_x - vertex_red->geometry.w / 2, screen_y - selected->thickness - vertex_red->geometry.h);
-            vertex_red->update_text(std::to_string(selected->color.r));
-            vertex_red->set_visible(true);
+            veditor.select_vertex(selected);
+            veditor.update_position(screen_x - veditor.geometry.w / 2, screen_y - selected->thickness - veditor.geometry.h);
         }
         else
-        {
-            vertex_red->set_visible(false);
-        }
+            veditor.unselect();
     }
 }
 
 void handle_miss_click(int x, int y, bool hit)
 {
-    if (!hit && selected != NULL)
-    {
-        selected = NULL;
-        vertex_red->set_visible(false);
-    }
-}
-
-void handle_vertex_color_input(SDL_TextInputEvent event, Component *target)
-{
-    DialogBox *dialog = (DialogBox *)target;
-    if (std::stoi(dialog->get_text_content()) > 255)
-    {
-        dialog->update_text("255");
-    }
-    if (dialog == vertex_red)
-    {
-        SDL_Color color = {std::stoi(dialog->get_text_content()),
-                           selected->color.g,
-                           selected->color.b,
-                           selected->color.a};
-        selected->color = color;
-    }
+    if (!hit && veditor.is_selected())
+        veditor.unselect();
 }
 
 void handle_colorwheel_click(int x, int y, bool hit)
@@ -145,6 +128,103 @@ void handle_colorwheel_click(int x, int y, bool hit)
             ceditor.blue_editor->update_text(std::to_string(blue));
         }
     }
+}
+
+void handle_reset_onlick(int x, int y, bool hit)
+{
+    if (hit)
+    {
+        canvas->clear();
+        if (veditor.is_selected())
+            veditor.unselect();
+    }
+}
+
+bool reset_btn_on = false;
+
+void handle_veditor_redinput(SDL_TextInputEvent event, Component *target)
+{
+    DialogBox *dialog = (DialogBox *)target;
+    int n = std::stoi(dialog->get_text_content());
+    if (n > 255)
+    {
+        dialog->update_text("255");
+    }
+    else if (n < 0)
+    {
+        dialog->update_text("0");
+    }
+    veditor.update_red();
+}
+
+void handle_veditor_greeninput(SDL_TextInputEvent event, Component *target)
+{
+    DialogBox *dialog = (DialogBox *)target;
+    int n = std::stoi(dialog->get_text_content());
+    if (n > 255)
+    {
+        dialog->update_text("255");
+    }
+    else if (n < 0)
+    {
+        dialog->update_text("0");
+    }
+    veditor.update_green();
+}
+
+void handle_veditor_blueinput(SDL_TextInputEvent event, Component *target)
+{
+    DialogBox *dialog = (DialogBox *)target;
+    int n = std::stoi(dialog->get_text_content());
+    if (n > 255)
+    {
+        dialog->update_text("255");
+    }
+    else if (n < 0)
+    {
+        dialog->update_text("0");
+    }
+    veditor.update_blue();
+}
+
+void btn_animation(int x, int y, bool hit)
+{
+    if (hit && !reset_btn_on)
+    {
+        reset_btn->set_border_color({0, 0, 0, 100});
+        reset_btn_on = true;
+    }
+    else if (!hit && reset_btn_on)
+    {
+        reset_btn->set_border_color({0, 0, 0, 255});
+        reset_btn_on = false;
+    }
+}
+
+void thickness_control_animation(int x, int y, bool hit)
+{
+    if (hit && !thickness_label->is_visible())
+        thickness_label->set_visible(true);
+    else if (!hit && thickness_label->is_visible())
+        thickness_label->set_visible(false);
+}
+
+void handle_thicknessinput(SDL_TextInputEvent event, Component *target)
+{
+    DialogBox *dialog = (DialogBox *)target;
+    int n = std::stoi(dialog->get_text_content());
+    if (n > 10)
+    {
+        n = 10;
+        dialog->update_text("10");
+    }
+    else if (n < 1)
+    {
+        n = 1;
+        dialog->update_text("1");
+    }
+    canvas->thickness = n;
+    canvas->set_thickness(n);
 }
 
 int main(int argc, char *args[])
@@ -169,29 +249,42 @@ int main(int argc, char *args[])
     /* Load Assets */
     load_assets();
     /* Create Components */
+    thickness_label = new Label("Tamanho do Vértice", default_font, 19);
+    thickness_control = new DialogBox("3", 22, default_font, 10 * VW, 4 * VH);
     canvas = new Canvas(65 * VW, 90 * VH);
     message_text = new Label("Clique com o botão esquerdo para começar a desenhar um polígono.", default_font, 22);
-    vertex_red = new DialogBox("", 22, default_font, (18 * VW) / 3, 5 * VW);
     ceditor = CEditor((30 * VW) / 2 - ceditor.geometry.w / 2, 90 * cvw - 10 * VH, 18 * VW, 10 * VH, default_font);
+    veditor = VEditor((30 * VW) / 2 - veditor.geometry.w / 2, 90 * cvw - 10 * VH, 18 * VW, 10 * VH, default_font);
     color_wheel = new ColorWheel(ceditor.geometry.x + (ceditor.geometry.w / 2) - (5 * VW) / 2, ceditor.geometry.y - 10 * VW, 5 * VW);
+    reset_btn = new Button("Limpar", 10 * VW, 5 * VH, default_font);
     resize(SCREEN_WIDTH, SCREEN_HEIGHT);
-    /* Edit Components */
-    vertex_red->set_visible(false);
-    vertex_red->z_index = 1;
-    vertex_red->set_default_text("0");
-    vertex_red->set_ontextinput(handle_vertex_color_input);
-    vertex_red->set_onclick(handle_miss_click);
+    /* Components Setup */
+    // Vertex Editor
+    veditor.red->set_ontextinput(handle_veditor_redinput);
+    veditor.green->set_ontextinput(handle_veditor_greeninput);
+    veditor.blue->set_ontextinput(handle_veditor_blueinput);
     // Canvas
     canvas->set_onclick(canvas_onclick);
     canvas->set_onright_click(canvas_onright_click);
+    // Menu
     canvas->set_onmiddle_click(canvas_onmiddle_click);
     color_wheel->set_onclick(handle_colorwheel_click);
+    reset_btn->set_onclick(handle_reset_onlick);
+    reset_btn->set_onmotion(btn_animation);
+    thickness_label->set_visible(false);
+    thickness_control->digits_only = true;
+    thickness_control->set_default_text("1");
+    thickness_control->set_ontextinput(handle_thicknessinput);
+    thickness_control->set_onmotion(thickness_control_animation);
     /* Add Components */
     main_scene->add_component(canvas);
     main_scene->add_component(message_text);
-    main_scene->add_component(vertex_red);
     main_scene->add_collection(&ceditor);
+    main_scene->add_collection(&veditor);
     main_scene->add_component(color_wheel);
+    main_scene->add_component(reset_btn);
+    main_scene->add_component(thickness_control);
+    main_scene->add_component(thickness_label);
     main_scene->onresize(resize);
     /* Main Loop */
     while (!main_scene->quit)

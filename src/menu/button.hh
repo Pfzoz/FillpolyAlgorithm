@@ -5,7 +5,7 @@
 #include <string>
 #include <SDL2/SDL_ttf.h>
 #include <algorithm>
-#include "../scene.hh"
+#include "../scene/scene.hh"
 
 class Button : public Component
 {
@@ -38,14 +38,22 @@ private:
     }
 
 public:
-    int ptsize = 14;
+    int ptsize = 22;
 
     Button(std::string text_content, float width, float height, TTF_Font *font)
     {
         scaling = 8;
         this->text_content = text_content;
         this->font = font;
-        set_geometry(0, 0, width, height);
+        geometry.w = width;
+        geometry.h = height;
+        rescale(width, height);
+    }
+
+    void set_border_color(SDL_Color color)
+    {
+        this->border_color = color;
+        this->reload(renderer);
     }
 
     int get_width()

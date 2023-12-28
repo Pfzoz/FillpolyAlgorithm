@@ -5,7 +5,7 @@
 #include <string>
 #include <SDL2/SDL_ttf.h>
 #include <algorithm>
-#include "../scene.hh"
+#include "../scene/scene.hh"
 
 class DialogBox : public Component
 {
@@ -151,6 +151,7 @@ public:
                 else
                     text_content.pop_back();
                 reload(renderer);
+                this->ontextinput_callback({}, this);
             }
         }
         this->onkeydown_callback(sym);

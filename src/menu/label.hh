@@ -5,7 +5,7 @@
 #include <string>
 #include <SDL2/SDL_ttf.h>
 #include <algorithm>
-#include "../scene.hh"
+#include "../scene/scene.hh"
 
 class Label : public Component
 {

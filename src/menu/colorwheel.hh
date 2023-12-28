@@ -5,7 +5,7 @@
 #include <string>
 #include <algorithm>
 #include <math.h>
-#include "../scene.hh"
+#include "../scene/scene.hh"
 
 class ColorWheel : public Component
 {
@@ -60,7 +60,6 @@ private:
 
     void create_texture(SDL_Renderer *renderer)
     {
-        printf("Radius: %f, RES: %i %i\n", radius, x_res, y_res);
         texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, x_res, y_res);
         SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
         SDL_SetRenderTarget(renderer, texture);
@@ -76,7 +75,6 @@ private:
                     int phi = ((std::atan2(j, i) + M_PI)/(2*M_PI))*360;
                     int r, g, b;
                     hsvToRgb(phi, distance / radius, 1, &r, &g, &b);
-                    printf("%i %f\n", phi, distance / radius);
                     SDL_SetRenderDrawColor(renderer, r, g, b, 255);
                     SDL_RenderDrawPoint(renderer, i + x_res / 2, j + y_res / 2);
                 }

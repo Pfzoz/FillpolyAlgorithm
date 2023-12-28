@@ -4,7 +4,7 @@
 #include <SDL2/SDL.h>
 #include <math.h>
 #include <vector>
-#include "../scene.hh"
+#include "../scene/scene.hh"
 #include "../geometry.hh"
 
 class Canvas : public Component
@@ -80,6 +80,12 @@ public:
         }
     }
 
+    void set_thickness(int thickness)
+    {
+        for (Vertex *vertex : vertices)
+            vertex->thickness = thickness;
+    }
+
     void open_polygon(float x, float y, SDL_Color color = {0, 0, 0, 255})
     {
         if (creating_polygon)
@@ -143,6 +149,19 @@ public:
     {
         *x = (int)((vertex->x * (float)geometry.w) + (float)geometry.x);
         *y = (int)((vertex->y * (float)geometry.h) + (float)geometry.y);
+    }
+
+    void clear()
+    {
+        if (creating_polygon)
+        {
+            temp_edges.clear();
+            creating_polygon = false;
+            current_vertices = 0;
+        }
+        polygons.clear();
+        vertices.clear();
+        edges.clear();
     }
 
     Vertex *first_vertex_touched(float x, float y, float square_area = 0)
