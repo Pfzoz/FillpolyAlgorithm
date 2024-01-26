@@ -41,6 +41,7 @@ void load_assets()
 
 void resize(int width, int height)
 {
+    canvas->clear();
     c_screen_width = width;
     c_screen_height = height;
     cvw = (float)c_screen_width / 100;
@@ -135,6 +136,7 @@ void handle_reset_onlick(int x, int y, bool hit)
     if (hit)
     {
         canvas->clear();
+        message_text->update_text("Clique com o botão esquerdo para começar a desenhar um polígono.");
         if (veditor.is_selected())
             veditor.unselect();
     }

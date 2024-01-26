@@ -10,11 +10,93 @@
 class Canvas : public Component
 {
 private:
-    Vertex *first = NULL;
+    Vertex first;
     SDL_Color border_color = {0, 0, 0, 255};
-    std::vector<Vertex *> vertices;
-    std::vector<Edge *> edges, temp_edges;
-    std::vector<Polygon *> polygons;
+    std::vector<Vertex> vertices;
+    std::vector<Edge> edges, temp_edges;
+    std::vector<Polygon> polygons;
+
+    void draw_vertices()
+    {
+        for (Vertex vertex : vertices)
+        {
+            SDL_SetRenderDrawColor(renderer, vertex.color.r, vertex.color.g, vertex.color.b, vertex.color.a);
+            for (int i = 0; i < vertex.thickness; i++)
+            {
+                for (int j = vertex.x - i; j < (vertex.x + i); j++)
+                {
+                    SDL_RenderDrawPoint(renderer, j, vertex.y + i);
+                    SDL_RenderDrawPoint(renderer, j, vertex.y - i);
+                }
+                for (int j = vertex.y - i; j < (vertex.y + i); j++)
+                {
+                    SDL_RenderDrawPoint(renderer, vertex.x - i, j);
+                    SDL_RenderDrawPoint(renderer, vertex.x + i, j);
+                }
+            }
+        }
+    }
+
+    struct Active_Edge
+    {
+        float y_max, x_y_min;
+        float m_inversed;
+    };
+
+    bool static table_comparison(Active_Edge x, Active_Edge y)
+    {
+        return (x.x_y_min < y.x_y_min);
+    }
+
+    // Scanline Algorithm
+    void scanline_fill()
+    {
+        for (Polygon polygon : polygons)
+        {
+            std::vector<Active_Edge> active_table;
+            std::vector<Edge> _temp_edges = polygon.edges;
+            for (int y = polygon.y_min; y < polygon.y_max; y++)
+            {
+                // Interception
+                for (int i = 0; i < _temp_edges.size(); i++)
+                {
+                    if (y == _temp_edges[i].y_min)
+                    {
+                        active_table.push_back({(float)_temp_edges[i].y_max, (float)_temp_edges[i].x_y_min, _temp_edges[i].m_inversed});
+                        _temp_edges.erase(_temp_edges.begin() + i--);
+                    }
+                }
+                for (int i = 0; i < active_table.size(); i++)
+                {
+                    // Remove y == y_max
+                    if (active_table[i].y_max == y)
+                        active_table.erase(active_table.begin() + i--);
+                }
+                std::sort(active_table.begin(), active_table.end(), table_comparison);
+                // Drawing
+                for (int i = 0; i + 1 < active_table.size(); i += 2)
+                {
+                    if (active_table[i].x_y_min != active_table[i + 1].x_y_min)
+                    {
+                        int start = std::ceil(active_table[i].x_y_min);
+                        int end;
+                        if (active_table[i + 1].x_y_min - std::floor(active_table[i + 1].x_y_min) != 0)
+                            end = std::floor(active_table[i + 1].x_y_min);
+                        else
+                            end = active_table[i + 1].x_y_min - 1;
+                        for (int x = start; x < end; x++)
+                        {
+                            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                            SDL_RenderDrawPoint(renderer, x, y);
+                        }
+                    }
+                    // Incrementing
+                    active_table[i].x_y_min = active_table[i].x_y_min + active_table[i].m_inversed;
+                    active_table[i + 1].x_y_min = active_table[i + 1].x_y_min + active_table[i + 1].m_inversed;
+                }
+            }
+        }
+    }
 
     void create_texture(SDL_Renderer *renderer)
     {
@@ -25,7 +107,17 @@ private:
         SDL_RenderClear(renderer);
         SDL_SetRenderDrawColor(renderer, border_color.r, border_color.g, border_color.b, border_color.a);
         SDL_RenderDrawRect(renderer, NULL);
+        // Draw Geometry
+        // Vertices
+        draw_vertices();
+        // Scanline
+        scanline_fill();
         SDL_SetRenderTarget(renderer, NULL);
+    }
+
+    bool static compareEdges(const Edge &a, const Edge &b)
+    {
+        return a.x_y_min < b.x_y_min;
     }
 
 public:
@@ -43,47 +135,13 @@ public:
     void draw(SDL_Renderer *renderer)
     {
         SDL_RenderCopy(renderer, texture, NULL, &geometry);
-        for (Vertex *vertex : vertices)
-        {
-            SDL_SetRenderDrawColor(renderer, vertex->color.r, vertex->color.g, vertex->color.b, vertex->color.a);
-            for (int i = 0; i < vertex->thickness; i++)
-            {
-                // SDL_RenderDrawPoint(renderer, vertex->x * geometry.w + geometry.x, vertex->y * geometry.h + geometry.y);
-                int vertex_x = vertex->x * geometry.w + geometry.x;
-                int vertex_y = vertex->y * geometry.h + geometry.y;
-                for (int j = vertex_x - i; j < (vertex_x + i); j++)
-                {
-                    SDL_RenderDrawPoint(renderer, j, vertex_y + i);
-                }
-                for (int j = vertex_x - i; j < (vertex_x + i); j++)
-                {
-                    SDL_RenderDrawPoint(renderer, j, vertex_y - i);
-                }
-                for (int j = vertex_y - i; j < (vertex_y + i); j++)
-                {
-                    SDL_RenderDrawPoint(renderer, vertex_x - i, j);
-                }
-                for (int j = vertex_y - i; j < (vertex_y + i); j++)
-                {
-                    SDL_RenderDrawPoint(renderer, vertex_x + i, j);
-                }
-            }
-        }
-        for (Edge *edge : edges)
-        {
-            SDL_SetRenderDrawColor(renderer, (edge->a->color.r + edge->b->color.r) / 2, (edge->a->color.g + edge->b->color.g) / 2, (edge->a->color.b + edge->b->color.b) / 2, (edge->a->color.a + edge->b->color.a) / 2);
-            SDL_RenderDrawLine(renderer, edge->a->x * geometry.w + geometry.x, edge->a->y * geometry.h + geometry.y, edge->b->x * geometry.w + geometry.x, edge->b->y * geometry.h + geometry.y);
-        }
-        for (Polygon *polygon : polygons)
-        {
-            // scanline
-        }
     }
 
     void set_thickness(int thickness)
     {
-        for (Vertex *vertex : vertices)
-            vertex->thickness = thickness;
+        for (Vertex vertex : vertices)
+            vertex.thickness = thickness;
+        reload(renderer);
     }
 
     void open_polygon(float x, float y, SDL_Color color = {0, 0, 0, 255})
@@ -94,11 +152,36 @@ public:
             std::exit(1);
         }
         this->creating_polygon = true;
-        first = new Vertex((x - (float)geometry.x) / (float)geometry.w, (y - (float)geometry.y) / (float)geometry.h);
-        first->color = color;
-        first->thickness = thickness;
+        float sx = (float)x_res / (float)geometry.w;
+        float sy = (float)y_res / (float)geometry.h;
+        first = Vertex(sx * (x - (float)geometry.x), sy * (y - (float)geometry.y));
+        first.color = color;
+        first.thickness = thickness;
         this->vertices.push_back(first);
         current_vertices++;
+        reload(renderer);
+    }
+
+    void set_geometry(int x, int y, float width, float height)
+    {
+        set_position(x, y);
+        set_dimensions(width, height);
+    }
+
+    void set_dimensions(float width, float height)
+    {
+        geometry.w = width;
+        geometry.h = height;
+        float width_difference = width - geometry.w;
+        float height_difference = height - geometry.h;
+        if (texture != NULL)
+        {
+            for (Vertex vertex : vertices)
+            {
+                vertex.x += width_difference;
+                vertex.y += height_difference;
+            }
+        }
     }
 
     void draw_polygon(float x, float y, SDL_Color color = {0, 0, 0, 255})
@@ -108,14 +191,17 @@ public:
             printf("Não há polígonos sendo criados...\n");
             std::exit(1);
         }
-        Vertex *vertex = new Vertex((x - (float)geometry.x) / (float)geometry.w, (y - (float)geometry.y) / (float)geometry.h);
-        vertex->thickness = thickness;
-        vertex->color = color;
+        float sx = (float)x_res / (float)geometry.w;
+        float sy = (float)y_res / (float)geometry.h;
+        Vertex vertex = Vertex(sx * (x - (float)geometry.x), sy * (y - (float)geometry.y));
+        vertex.thickness = thickness;
+        vertex.color = color;
         vertices.push_back(vertex);
-        Edge *edge = new Edge(vertices[vertices.size() - 2], vertices[vertices.size() - 1]);
+        Edge edge = Edge(vertices[vertices.size() - 2], vertices[vertices.size() - 1]);
         edges.push_back(edge);
         temp_edges.push_back(edge);
         current_vertices++;
+        reload(renderer);
     }
 
     void close_polygon()
@@ -125,8 +211,7 @@ public:
             printf("Não há polígonos sendo criados...\n");
             std::exit(1);
         }
-        Edge *edge = new Edge(vertices[vertices.size() - 1], first);
-        first = NULL;
+        Edge edge = Edge(vertices[vertices.size() - 1], first);
         edges.push_back(edge);
         temp_edges.push_back(edge);
         if (temp_edges.size() < 3)
@@ -134,21 +219,24 @@ public:
             printf("É necessário mais de 2 arestas para criar um polígono.\n");
             std::exit(1);
         }
-        Polygon *polygon = new Polygon();
-        for (Edge *edge : temp_edges)
+        Polygon polygon = Polygon();
+        for (Edge edge : temp_edges)
         {
-            polygon->edges.push_back(edge);
+            polygon.add_edge(edge);
         }
         temp_edges.clear();
         polygons.push_back(polygon);
         creating_polygon = false;
         current_vertices = 0;
+        reload(renderer);
     }
 
     void get_vertex_pos(Vertex *vertex, int *x, int *y)
     {
-        *x = (int)((vertex->x * (float)geometry.w) + (float)geometry.x);
-        *y = (int)((vertex->y * (float)geometry.h) + (float)geometry.y);
+        float sx = (float)x_res / (float)geometry.w;
+        float sy = (float)y_res / (float)geometry.h;
+        *x = (float)vertex->x / sx + (float)geometry.x;
+        *y = (float)vertex->y / sy + (float)geometry.y;
     }
 
     void clear()
@@ -162,28 +250,25 @@ public:
         polygons.clear();
         vertices.clear();
         edges.clear();
+        reload(renderer);
     }
 
     Vertex *first_vertex_touched(float x, float y, float square_area = 0)
     {
         if (square_area <= 0)
         {
-            for (Vertex *vertex : vertices)
+            for (Vertex vertex : vertices)
             {
-                float vertex_x = (vertex->x * (float)geometry.w) + (float)geometry.x;
-                float vertex_y = (vertex->y * (float)geometry.h) + (float)geometry.y;
-                if (x >= vertex_x - (float)vertex->thickness / 2 && y >= vertex_y - (float)vertex->thickness / 2 && x <= vertex_x + (float)vertex->thickness && y <= vertex_y + (float)vertex->thickness)
-                    return vertex;
+                if (x >= vertex.x - (float)vertex.thickness / 2 && y >= vertex.y - (float)vertex.thickness / 2 && x <= vertex.x + (float)vertex.thickness && y <= vertex.y + (float)vertex.thickness)
+                    return &vertex;
             }
         }
         else
         {
-            for (Vertex *vertex : vertices)
+            for (Vertex vertex : vertices)
             {
-                float vertex_x = (vertex->x * (float)geometry.w) + (float)geometry.x;
-                float vertex_y = (vertex->y * (float)geometry.h) + (float)geometry.y;
-                if (x >= vertex_x - square_area / 2 && y >= vertex_y - square_area / 2 && x <= vertex_x + square_area && y <= vertex_y + square_area)
-                    return vertex;
+                if (x >= vertex.x - square_area / 2 && y >= vertex.y - square_area / 2 && x <= vertex.x + square_area && y <= vertex.y + square_area)
+                    return &vertex;
             }
         }
         return NULL;

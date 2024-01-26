@@ -66,7 +66,6 @@ public:
         geometry.w = width;
         geometry.h = height;
         int w = (geometry.w - (geometry.w * 0.01) * 2) / 3;
-        printf("%i\n", w);
         red->geometry.w = w;
         green->geometry.w = w;
         blue->geometry.w = w;
