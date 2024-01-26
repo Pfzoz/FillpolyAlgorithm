@@ -12,9 +12,9 @@ class Canvas : public Component
 private:
     Vertex *first = NULL;
     SDL_Color border_color = {0, 0, 0, 255};
-    std::vector<Vertex*> vertices;
-    std::vector<Edge*> edges, temp_edges;
-    std::vector<Polygon*> polygons;
+    std::vector<Vertex *> vertices;
+    std::vector<Edge *> edges, temp_edges;
+    std::vector<Polygon *> polygons;
 
     void draw_vertices()
     {
@@ -49,13 +49,22 @@ private:
         return (x.x_y_min < y.x_y_min);
     }
 
+    int rgb_clamp(float x)
+    {
+        if (x < 0)
+            return 0;
+        else if (x > 255)
+            return 255;
+        return x;
+    }
+
     // Scanline Algorithm
     void scanline_fill()
     {
         for (Polygon *polygon : polygons)
         {
             std::vector<Active_Edge> active_table;
-            std::vector<Edge*> _temp_edges = polygon->edges;
+            std::vector<Edge *> _temp_edges = polygon->edges;
             for (int y = polygon->y_min; y < polygon->y_max; y++)
             {
                 // Interception
@@ -86,12 +95,12 @@ private:
                         else
                             end = active_table[i + 1].x_y_min - 1;
                         // Colors
-                        float ri = (float)(active_table[i].edge->a->color.r - active_table[i].edge->b->color.r) / (float)(active_table[i].edge->a->y - active_table[i].edge->b->y);
-                        float gi = (float)(active_table[i].edge->a->color.g - active_table[i].edge->b->color.g) / (float)(active_table[i].edge->a->y - active_table[i].edge->b->y);
-                        float bi = (float)(active_table[i].edge->a->color.b - active_table[i].edge->b->color.b) / (float)(active_table[i].edge->a->y - active_table[i].edge->b->y);
-                        float rf = (float)(active_table[i + 1].edge->a->color.r - active_table[i + 1].edge->b->color.r) / (float)(active_table[i + 1].edge->a->y - active_table[i + 1].edge->b->y);
-                        float gf = (float)(active_table[i + 1].edge->a->color.g - active_table[i + 1].edge->b->color.g) / (float)(active_table[i + 1].edge->a->y - active_table[i + 1].edge->b->y);
-                        float bf = (float)(active_table[i + 1].edge->a->color.b - active_table[i + 1].edge->b->color.b) / (float)(active_table[i + 1].edge->a->y - active_table[i + 1].edge->b->y);
+                        float ri = (float)(active_table[i].edge->x_y_max_vertex->color.r - active_table[i].edge->x_y_min_vertex->color.r) / (float)(active_table[i].edge->x_y_max_vertex->y - active_table[i].edge->x_y_min_vertex->y);
+                        float gi = (float)(active_table[i].edge->x_y_max_vertex->color.g - active_table[i].edge->x_y_min_vertex->color.g) / (float)(active_table[i].edge->x_y_max_vertex->y - active_table[i].edge->x_y_min_vertex->y);
+                        float bi = (float)(active_table[i].edge->x_y_max_vertex->color.b - active_table[i].edge->x_y_min_vertex->color.b) / (float)(active_table[i].edge->x_y_max_vertex->y - active_table[i].edge->x_y_min_vertex->y);
+                        float rf = (float)(active_table[i + 1].edge->x_y_max_vertex->color.r - active_table[i + 1].edge->x_y_min_vertex->color.r) / (float)(active_table[i + 1].y_max - active_table[i + 1].edge->y_min);
+                        float gf = (float)(active_table[i + 1].edge->x_y_max_vertex->color.g - active_table[i + 1].edge->x_y_min_vertex->color.g) / (float)(active_table[i + 1].y_max - active_table[i + 1].edge->y_min);
+                        float bf = (float)(active_table[i + 1].edge->x_y_max_vertex->color.b - active_table[i + 1].edge->x_y_min_vertex->color.b) / (float)(active_table[i + 1].y_max - active_table[i + 1].edge->y_min);
                         float redi = (float)active_table[i].edge->x_y_min_vertex->color.r + ri * (float)(y - active_table[i].edge->y_min);
                         float greeni = (float)active_table[i].edge->x_y_min_vertex->color.g + gi * (float)(y - active_table[i].edge->y_min);
                         float bluei = (float)active_table[i].edge->x_y_min_vertex->color.b + bi * (float)(y - active_table[i].edge->y_min);
@@ -100,14 +109,18 @@ private:
                         float redf = (float)active_table[i + 1].edge->x_y_min_vertex->color.r + rf * (float)(y - active_table[i + 1].edge->y_min);
                         float greenf = (float)active_table[i + 1].edge->x_y_min_vertex->color.g + gf * (float)(y - active_table[i + 1].edge->y_min);
                         float bluef = (float)active_table[i + 1].edge->x_y_min_vertex->color.b + bf * (float)(y - active_table[i + 1].edge->y_min);
-                        SDL_SetRenderDrawColor(renderer, rf, gf, bf, 255);
-                        SDL_RenderDrawPoint(renderer, end - 1, y);
-                        float txr = (redf - redi) / (active_table[i].x_y_min - active_table[i + 1].x_y_min);
-                        float txg = (greenf - greeni) / (active_table[i].x_y_min - active_table[i + 1].x_y_min);
-                        float txb = (bluef - bluei) / (active_table[i].x_y_min - active_table[i + 1].x_y_min);
-                        for (int x = start + 1; x < end - 1; x++)
+                        SDL_SetRenderDrawColor(renderer, redf, greenf, bluef, 255);
+                        SDL_RenderDrawPoint(renderer, end, y);
+                        float x_delta = end - start;
+                        float txr = (redf - redi) / x_delta;
+                        float txg = (greenf - greeni) / x_delta;
+                        float txb = (bluef - bluei) / x_delta;
+                        for (int x = start + 1; x < end; x++)
                         {
-                            SDL_SetRenderDrawColor(renderer, (float)(x - start + 1) * txr, (float)(x - start + 1) * txg, (float)(x - start + 1) * txb, 255);
+                            redi += txr;
+                            greeni += txg;
+                            bluei += txb;
+                            SDL_SetRenderDrawColor(renderer, rgb_clamp(redi), rgb_clamp(greeni), rgb_clamp(bluei), 255);
                             SDL_RenderDrawPoint(renderer, x, y);
                         }
                     }

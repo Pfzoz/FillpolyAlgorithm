@@ -35,7 +35,7 @@ public:
 class Edge
 {
 public:
-    Vertex *a, *b, *x_y_min_vertex;
+    Vertex *a, *b, *x_y_min_vertex, *x_y_max_vertex;
     std::string name;
     int y_min, x_y_min, y_max;
     float m_inversed;
@@ -55,6 +55,7 @@ public:
             this->y_max = b->y;
             this->x_y_min = a->x;
             x_y_min_vertex = a;
+            x_y_max_vertex = b;
         }
         else
         {
@@ -62,9 +63,9 @@ public:
             this->y_max = a->y;
             this->x_y_min = b->x;
             x_y_min_vertex = b;
+            x_y_max_vertex = a;
         }
         m_inversed = ((float)b->x - (float)a->x) / ((float)b->y - (float)a->y);
-        printf("XS: %i\n", x_y_min);
     }
 };
 

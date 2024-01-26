@@ -94,14 +94,11 @@ void canvas_onright_click(int x, int y, bool hit)
 
 void canvas_onmiddle_click(int x, int y, bool hit)
 {
-    printf("Happening!\n");
-    if (x > canvas->geometry.x && x < canvas->geometry.w && y > canvas->geometry.y && y < canvas->geometry.h)
+    if (x > canvas->geometry.x && x < canvas->geometry.x + canvas->geometry.w && y > canvas->geometry.y && y < canvas->geometry.y + canvas->geometry.h)
     {
-        printf("Heree\n");
         Vertex *selected = canvas->first_vertex_touched(x, y, (c_screen_width + c_screen_height) * 0.012);
         if (selected != NULL && selected != veditor.vertex)
         {
-            printf("Selecting\n");
             int screen_x, screen_y;
             canvas->get_vertex_pos(selected, &screen_x, &screen_y);
             veditor.select_vertex(selected);
