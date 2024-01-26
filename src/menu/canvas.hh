@@ -9,9 +9,10 @@
 
 class Canvas : public Component
 {
+    SDL_Color border_color = {0, 0, 0, 255};
+    SDL_Color fill_color = {255, 255, 255, 255};
 private:
     Vertex *first = NULL;
-    SDL_Color border_color = {0, 0, 0, 255};
     std::vector<Vertex *> vertices;
     std::vector<Edge *> edges, temp_edges;
     std::vector<Polygon *> polygons;
@@ -36,6 +37,7 @@ private:
             }
         }
     }
+
 
     struct Active_Edge
     {
@@ -149,7 +151,7 @@ private:
         texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, x_res, y_res);
         SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
         SDL_SetRenderTarget(renderer, texture);
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+        SDL_SetRenderDrawColor(renderer, fill_color.r, fill_color.g, fill_color.b, fill_color.a);
         SDL_RenderClear(renderer);
         SDL_SetRenderDrawColor(renderer, border_color.r, border_color.g, border_color.b, border_color.a);
         SDL_RenderDrawRect(renderer, NULL);
@@ -176,6 +178,12 @@ public:
         this->geometry.w = width;
         this->geometry.h = height;
         rescale(width, height);
+    }
+
+    void set_fill(SDL_Color color)
+    {
+        fill_color = color;
+        reload(renderer);
     }
 
     void draw(SDL_Renderer *renderer)

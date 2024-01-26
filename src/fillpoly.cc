@@ -26,7 +26,8 @@ Label *message_text, *thickness_label, *edit_message;
 CEditor ceditor;
 VEditor veditor;
 DialogBox *thickness_control;
-ColorWheel *color_wheel;
+ColorWheel *color_wheel, *bg_color_wheel;
+LightBar *light_bar, *bg_light_bar;
 Canvas *canvas;
 
 void load_assets()
@@ -55,6 +56,8 @@ void resize(int width, int height)
     ceditor.update_geometry((30 * cvw) / 2 - ceditor.geometry.w / 2, 90 * cvh - 10 * cvh, 18 * cvw, 10 * cvh);
     color_wheel->set_position(ceditor.geometry.x + (ceditor.geometry.w / 2) - color_wheel->geometry.w / 2, ceditor.geometry.y - color_wheel->geometry.h);
     color_wheel->set_radius(5 * cvw);
+    light_bar->set_dimensions(2 * cvw, color_wheel->geometry.h);
+    light_bar->set_position(color_wheel->geometry.x + color_wheel->geometry.w + 1 * cvw, color_wheel->geometry.y);
     // Vertex
     veditor.update_dimensions(18 * cvw, 10 * cvh);
     // Menu
@@ -65,6 +68,27 @@ void resize(int width, int height)
     thickness_label->set_position(thickness_control->geometry.x + thickness_control->geometry.w, thickness_control->geometry.y + (thickness_control->geometry.h / 2) - thickness_label->geometry.h / 2);
     background_btn->set_dimensions(15 * cvw, 5 * cvh);
     background_btn->set_position(reset_btn->geometry.x + (reset_btn->geometry.w / 2) - background_btn->geometry.w / 2, thickness_control->geometry.y - background_btn->geometry.h - menu_gap);
+    bg_color_wheel->set_position(background_btn->geometry.x + (background_btn->geometry.w / 2) - bg_color_wheel->geometry.w / 2, background_btn->geometry.y - bg_color_wheel->geometry.h - menu_gap);
+    bg_light_bar->set_dimensions(2 * cvw, color_wheel->geometry.h);
+    bg_light_bar->set_position(bg_color_wheel->geometry.x + bg_color_wheel->geometry.w + 1 * cvw, bg_color_wheel->geometry.y);
+}
+
+void lightbar_onclick(int x, int y, bool hit)
+{
+    if (hit)
+    {
+        light_bar->set_luminance(x, y);
+        color_wheel->set_luminance((float)light_bar->get_luminance()/255);
+    }
+}
+
+void bg_lightbar_onclick(int x, int y, bool hit)
+{
+    if (hit)
+    {
+        bg_light_bar->set_luminance(x, y);
+        bg_color_wheel->set_luminance((float)bg_light_bar->get_luminance()/255);
+    }
 }
 
 void canvas_onclick(int x, int y, bool hit)
@@ -194,7 +218,7 @@ void handle_veditor_blueinput(SDL_TextInputEvent event, Component *target)
     canvas->set_colors();
 }
 
-void btn_animation(int x, int y, bool hit)
+void reset_btn_animation(int x, int y, bool hit)
 {
     if (hit && !reset_btn_on)
     {
@@ -208,12 +232,45 @@ void btn_animation(int x, int y, bool hit)
     }
 }
 
+bool background_btn_on = false;
+
+void background_btn_animation(int x, int y, bool hit)
+{
+    if (hit && !background_btn_on)
+    {
+        background_btn->set_border_color({0, 0, 0, 100});
+        background_btn_on = true;
+    }
+    else if (!hit && background_btn_on)
+    {
+        background_btn->set_border_color({0, 0, 0, 255});
+        background_btn_on = false;
+    }
+}
+
 void thickness_control_animation(int x, int y, bool hit)
 {
     if (hit && !thickness_label->is_visible())
         thickness_label->set_visible(true);
     else if (!hit && thickness_label->is_visible())
         thickness_label->set_visible(false);
+}
+
+void handle_background_btn_onclick(int x, int y, bool hit)
+{
+    if (hit)
+    {
+        if (!bg_color_wheel->is_visible())
+        {
+            bg_color_wheel->set_visible(true);
+            bg_light_bar->set_visible(true);
+        }
+        else
+        {
+            bg_color_wheel->set_visible(false);
+            bg_light_bar->set_visible(false);
+        }
+    }
 }
 
 void handle_thicknessinput(SDL_TextInputEvent event, Component *target)
@@ -232,6 +289,19 @@ void handle_thicknessinput(SDL_TextInputEvent event, Component *target)
     }
     canvas->thickness = n;
     canvas->set_thickness(n);
+}
+
+void handle_on_bg_color_click(int x, int y, bool hit)
+{
+    int red = -1, blue = -1, green = -1;
+    if (hit)
+    {
+        bg_color_wheel->get_color(x, y, &red, &blue, &green);
+        if (red != -1 && blue != -1 && green != -1)
+        {
+            canvas->set_fill({(Uint8)red, (Uint8)blue, (Uint8)green, 255});
+        }
+    }
 }
 
 int main(int argc, char *args[])
@@ -264,6 +334,11 @@ int main(int argc, char *args[])
     ceditor = CEditor((30 * VW) / 2 - ceditor.geometry.w / 2, 90 * cvw - 10 * VH, 18 * VW, 10 * VH, default_font);
     veditor = VEditor((30 * VW) / 2 - veditor.geometry.w / 2, 90 * cvw - 10 * VH, 18 * VW, 10 * VH, default_font);
     color_wheel = new ColorWheel(ceditor.geometry.x + (ceditor.geometry.w / 2) - (5 * VW) / 2, ceditor.geometry.y - 10 * VW, 5 * VW);
+    bg_color_wheel = new ColorWheel(color_wheel->geometry.w, ceditor.geometry.h, 5 * VW);
+    bg_color_wheel->set_visible(false);
+    light_bar = new LightBar(2 * VW, color_wheel->geometry.h);
+    bg_light_bar = new LightBar(2 * VW, color_wheel->geometry.h);
+    bg_light_bar->set_visible(false);
     reset_btn = new Button("Limpar", 10 * VW, 5 * VH, default_font);
     background_btn = new Button("Mudar Cor de Fundo", 20 * VW, 5 * VH, default_font);
     resize(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -283,12 +358,17 @@ int main(int argc, char *args[])
     canvas->set_onmiddle_click(canvas_onmiddle_click);
     color_wheel->set_onclick(handle_colorwheel_click);
     reset_btn->set_onclick(handle_reset_onlick);
-    reset_btn->set_onmotion(btn_animation);
+    reset_btn->set_onmotion(reset_btn_animation);
     thickness_label->set_visible(false);
     thickness_control->digits_only = true;
     thickness_control->set_default_text("1");
     thickness_control->set_ontextinput(handle_thicknessinput);
     thickness_control->set_onmotion(thickness_control_animation);
+    background_btn->set_onclick(handle_background_btn_onclick);
+    background_btn->set_onmotion(background_btn_animation);
+    bg_color_wheel->set_onclick(handle_on_bg_color_click);
+    light_bar->set_onclick(lightbar_onclick);
+    bg_light_bar->set_onclick(bg_lightbar_onclick);
     /* Add Components */
     main_scene->add_component(canvas);
     main_scene->add_component(message_text);
@@ -300,6 +380,9 @@ int main(int argc, char *args[])
     main_scene->add_component(thickness_control);
     main_scene->add_component(thickness_label);
     main_scene->add_component(background_btn);
+    main_scene->add_component(bg_color_wheel);
+    main_scene->add_component(light_bar);
+    main_scene->add_component(bg_light_bar);
     main_scene->onresize(resize);
     /* Main Loop */
     while (!main_scene->quit)

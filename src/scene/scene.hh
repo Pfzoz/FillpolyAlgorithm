@@ -50,7 +50,7 @@ public:
         if (component->z_index > max_z)
         {
             max_z = component->z_index;
-            printf("%i\n", max_z);
+            ("%i\n", max_z);
             while (components.size() != max_z + 1)
             {
                 components.push_back(std::vector<Component *>{});

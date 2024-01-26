@@ -10,6 +10,7 @@
 class ColorWheel : public Component
 {
 private:
+    float luminance = 0.5;
     SDL_Color background_color = {0, 0, 0, 0};
     SDL_Color border_color = {0, 0, 0, 255};
     SDL_Color outer_border_color = {0, 0, 0, 0};
@@ -74,7 +75,7 @@ private:
                 {
                     int phi = ((std::atan2(j, i) + M_PI)/(2*M_PI))*360;
                     int r, g, b;
-                    hsvToRgb(phi, distance / radius, 1, &r, &g, &b);
+                    hsvToRgb(phi, distance / radius, luminance, &r, &g, &b);
                     SDL_SetRenderDrawColor(renderer, r, g, b, 255);
                     SDL_RenderDrawPoint(renderer, i + x_res / 2, j + y_res / 2);
                 }
@@ -114,7 +115,7 @@ public:
         if (distance < radius)
         {
             int phi = ((std::atan2(actual_y, actual_x) + M_PI)/(2*M_PI))*360;
-            hsvToRgb(phi, distance / radius, 1, red, green, blue);
+            hsvToRgb(phi, distance / radius, luminance, red, green, blue);
         }
     }
 
@@ -137,6 +138,12 @@ public:
             SDL_DestroyTexture(texture);
             create_texture(renderer);
         }
+    }
+
+    void set_luminance(float luminance)
+    {
+        this->luminance = luminance;
+        reload(renderer);
     }
 
     bool in_bounds(int x, int y)
