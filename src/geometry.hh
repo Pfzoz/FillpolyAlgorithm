@@ -35,12 +35,12 @@ public:
 class Edge
 {
 public:
-    Vertex a, b;
+    Vertex *a, *b, *x_y_min_vertex;
     std::string name;
     int y_min, x_y_min, y_max;
     float m_inversed;
 
-    Edge(Vertex a, Vertex b, std::string name = "")
+    Edge(Vertex *a, Vertex *b, std::string name = "")
     {
         if (name == "")
         {
@@ -49,19 +49,21 @@ public:
         }
         this->a = a;
         this->b = b;
-        if (a.y <= b.y)
+        if (a->y <= b->y)
         {
-            this->y_min = a.y;
-            this->y_max = b.y;
-            this->x_y_min = a.x;
+            this->y_min = a->y;
+            this->y_max = b->y;
+            this->x_y_min = a->x;
+            x_y_min_vertex = a;
         }
         else
         {
-            this->y_min = b.y;
-            this->y_max = a.y;
-            this->x_y_min = b.x;
+            this->y_min = b->y;
+            this->y_max = a->y;
+            this->x_y_min = b->x;
+            x_y_min_vertex = b;
         }
-        m_inversed = ((float)b.x - (float)a.x) / ((float)b.y - (float)a.y);
+        m_inversed = ((float)b->x - (float)a->x) / ((float)b->y - (float)a->y);
         printf("XS: %i\n", x_y_min);
     }
 };
@@ -69,27 +71,27 @@ public:
 class Polygon
 {
 public:
-    std::vector<Edge> edges;
+    std::vector<Edge*> edges;
     std::string name;
     int y_max = 0, y_min = 0;
 
-    void add_edge(Edge edge)
+    void add_edge(Edge *edge)
     {
         edges.push_back(edge);
-        y_max = edges[0].y_max;
+        y_max = edges[0]->y_max;
         for (int i = 1; i < edges.size(); i++)
         {
-            if (edges[i].y_max > y_max)
+            if (edges[i]->y_max > y_max)
             {
-                y_max = edges[i].y_max;
+                y_max = edges[i]->y_max;
             }
         }
-        y_min = edges[0].y_min;
+        y_min = edges[0]->y_min;
         for (int i = 1; i < edges.size(); i++)
         {
-            if (edges[i].y_min < y_min)
+            if (edges[i]->y_min < y_min)
             {
-                y_min = edges[i].y_min;
+                y_min = edges[i]->y_min;
             }
         }
     }

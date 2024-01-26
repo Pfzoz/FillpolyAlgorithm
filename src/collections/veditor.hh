@@ -17,8 +17,9 @@ private:
     bool selected = false;
 
 public:
+    bool is_selected = false;
     DialogBox *red, *green, *blue;
-    Vertex *vertex = NULL;
+    Vertex *vertex;
     SDL_Rect geometry;
 
     VEditor(){};
@@ -46,6 +47,7 @@ public:
         components.push_back(green);
         components.push_back(blue);
     }
+
 
     void update_red()
     {
@@ -95,6 +97,7 @@ public:
 
     void select_vertex(Vertex *vertex)
     {
+        is_selected = true;
         this->vertex = vertex;
         red->update_text(std::to_string(vertex->color.r));
         green->update_text(std::to_string(vertex->color.g));
@@ -106,15 +109,11 @@ public:
 
     void unselect()
     {
+        is_selected = false;
         this->vertex = NULL;
         red->set_visible(false);
         green->set_visible(false);
         blue->set_visible(false);
-    }
-
-    bool is_selected()
-    {
-        return vertex != NULL ? true : false;
     }
 };
 

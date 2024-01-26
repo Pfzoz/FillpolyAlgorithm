@@ -28,7 +28,6 @@ VEditor veditor;
 DialogBox *thickness_control;
 ColorWheel *color_wheel;
 Canvas *canvas;
-Vertex *selected = NULL;
 
 void load_assets()
 {
@@ -41,7 +40,7 @@ void load_assets()
 
 void resize(int width, int height)
 {
-    canvas->clear();
+    // canvas->clear();
     c_screen_width = width;
     c_screen_height = height;
     cvw = (float)c_screen_width / 100;
@@ -67,7 +66,7 @@ void resize(int width, int height)
 
 void canvas_onclick(int x, int y, bool hit)
 {
-    if (hit && !veditor.is_selected())
+    if (hit && !veditor.is_selected)
     {
         SDL_Color color = {std::stoi(ceditor.red_editor->get_text_content()), std::stoi(ceditor.green_editor->get_text_content()), std::stoi(ceditor.blue_editor->get_text_content()), 255};
         if (canvas->current_vertices == 0)
@@ -79,7 +78,7 @@ void canvas_onclick(int x, int y, bool hit)
         else
             canvas->draw_polygon(x, y, color);
     }
-    else if (hit && veditor.is_selected())
+    else if (hit && veditor.is_selected)
         veditor.unselect();
 }
 
@@ -95,11 +94,14 @@ void canvas_onright_click(int x, int y, bool hit)
 
 void canvas_onmiddle_click(int x, int y, bool hit)
 {
-    if (hit)
+    printf("Happening!\n");
+    if (x > canvas->geometry.x && x < canvas->geometry.w && y > canvas->geometry.y && y < canvas->geometry.h)
     {
-        selected = canvas->first_vertex_touched(x, y, (c_screen_width + c_screen_height) * 0.012);
-        if (selected != NULL && veditor.vertex != selected)
+        printf("Heree\n");
+        Vertex *selected = canvas->first_vertex_touched(x, y, (c_screen_width + c_screen_height) * 0.012);
+        if (selected != NULL && selected != veditor.vertex)
         {
+            printf("Selecting\n");
             int screen_x, screen_y;
             canvas->get_vertex_pos(selected, &screen_x, &screen_y);
             veditor.select_vertex(selected);
@@ -112,7 +114,7 @@ void canvas_onmiddle_click(int x, int y, bool hit)
 
 void handle_miss_click(int x, int y, bool hit)
 {
-    if (!hit && veditor.is_selected())
+    if (!hit && veditor.is_selected)
         veditor.unselect();
 }
 
@@ -137,7 +139,7 @@ void handle_reset_onlick(int x, int y, bool hit)
     {
         canvas->clear();
         message_text->update_text("Clique com o botão esquerdo para começar a desenhar um polígono.");
-        if (veditor.is_selected())
+        if (veditor.is_selected)
             veditor.unselect();
     }
 }
@@ -157,6 +159,7 @@ void handle_veditor_redinput(SDL_TextInputEvent event, Component *target)
         dialog->update_text("0");
     }
     veditor.update_red();
+    canvas->set_colors();
 }
 
 void handle_veditor_greeninput(SDL_TextInputEvent event, Component *target)
@@ -172,6 +175,7 @@ void handle_veditor_greeninput(SDL_TextInputEvent event, Component *target)
         dialog->update_text("0");
     }
     veditor.update_green();
+    canvas->set_colors();
 }
 
 void handle_veditor_blueinput(SDL_TextInputEvent event, Component *target)
@@ -187,6 +191,7 @@ void handle_veditor_blueinput(SDL_TextInputEvent event, Component *target)
         dialog->update_text("0");
     }
     veditor.update_blue();
+    canvas->set_colors();
 }
 
 void btn_animation(int x, int y, bool hit)
@@ -262,9 +267,13 @@ int main(int argc, char *args[])
     resize(SCREEN_WIDTH, SCREEN_HEIGHT);
     /* Components Setup */
     // Vertex Editor
+    canvas->z_index = 0;
     veditor.red->set_ontextinput(handle_veditor_redinput);
     veditor.green->set_ontextinput(handle_veditor_greeninput);
     veditor.blue->set_ontextinput(handle_veditor_blueinput);
+    veditor.red->z_index = 1;
+    veditor.green->z_index = 1;
+    veditor.blue->z_index = 1;
     // Canvas
     canvas->set_onclick(canvas_onclick);
     canvas->set_onright_click(canvas_onright_click);

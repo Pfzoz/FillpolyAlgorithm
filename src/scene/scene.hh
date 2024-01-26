@@ -50,6 +50,7 @@ public:
         if (component->z_index > max_z)
         {
             max_z = component->z_index;
+            printf("%i\n", max_z);
             while (components.size() != max_z + 1)
             {
                 components.push_back(std::vector<Component *>{});
@@ -78,7 +79,7 @@ public:
     {
         SDL_SetRenderDrawColor(renderer, fill_colors[0], fill_colors[1], fill_colors[2], fill_colors[3]);
         SDL_RenderClear(renderer);
-        for (int i = max_z; i > -1; i--)
+        for (int i = 0; i <= max_z; i++)
         {
             for (Component *component : components[i])
             {
