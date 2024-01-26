@@ -101,14 +101,26 @@ private:
                         float rf = (float)(active_table[i + 1].edge->x_y_max_vertex->color.r - active_table[i + 1].edge->x_y_min_vertex->color.r) / (float)(active_table[i + 1].y_max - active_table[i + 1].edge->y_min);
                         float gf = (float)(active_table[i + 1].edge->x_y_max_vertex->color.g - active_table[i + 1].edge->x_y_min_vertex->color.g) / (float)(active_table[i + 1].y_max - active_table[i + 1].edge->y_min);
                         float bf = (float)(active_table[i + 1].edge->x_y_max_vertex->color.b - active_table[i + 1].edge->x_y_min_vertex->color.b) / (float)(active_table[i + 1].y_max - active_table[i + 1].edge->y_min);
-                        float redi = (float)active_table[i].edge->x_y_min_vertex->color.r + ri * (float)(y - active_table[i].edge->y_min);
-                        float greeni = (float)active_table[i].edge->x_y_min_vertex->color.g + gi * (float)(y - active_table[i].edge->y_min);
-                        float bluei = (float)active_table[i].edge->x_y_min_vertex->color.b + bi * (float)(y - active_table[i].edge->y_min);
+                        float redi = (float)active_table[i].edge->x_y_min_vertex->color.r;
+                        float greeni = (float)active_table[i].edge->x_y_min_vertex->color.g;
+                        float bluei = (float)active_table[i].edge->x_y_min_vertex->color.b;
+                        for (int j = 0; j < y - active_table[i].edge->y_min; j++)
+                        {
+                            redi += ri;
+                            greeni += gi;
+                            bluei += bi;
+                        }
                         SDL_SetRenderDrawColor(renderer, redi, greeni, bluei, 255);
                         SDL_RenderDrawPoint(renderer, start, y);
-                        float redf = (float)active_table[i + 1].edge->x_y_min_vertex->color.r + rf * (float)(y - active_table[i + 1].edge->y_min);
-                        float greenf = (float)active_table[i + 1].edge->x_y_min_vertex->color.g + gf * (float)(y - active_table[i + 1].edge->y_min);
-                        float bluef = (float)active_table[i + 1].edge->x_y_min_vertex->color.b + bf * (float)(y - active_table[i + 1].edge->y_min);
+                        float redf = (float)active_table[i + 1].edge->x_y_min_vertex->color.r;
+                        float greenf = (float)active_table[i + 1].edge->x_y_min_vertex->color.g;
+                        float bluef = (float)active_table[i + 1].edge->x_y_min_vertex->color.b;
+                        for (int j = 0; j < y - active_table[i + 1].edge->y_min; j++)
+                        {
+                            redf += rf;
+                            greenf += gf;
+                            bluef += bf;
+                        }
                         SDL_SetRenderDrawColor(renderer, redf, greenf, bluef, 255);
                         SDL_RenderDrawPoint(renderer, end, y);
                         float x_delta = end - start;
@@ -120,7 +132,7 @@ private:
                             redi += txr;
                             greeni += txg;
                             bluei += txb;
-                            SDL_SetRenderDrawColor(renderer, rgb_clamp(redi), rgb_clamp(greeni), rgb_clamp(bluei), 255);
+                            SDL_SetRenderDrawColor(renderer, redi, greeni, bluei, 255);
                             SDL_RenderDrawPoint(renderer, x, y);
                         }
                     }
@@ -271,6 +283,37 @@ public:
         float sy = (float)y_res / (float)geometry.h;
         *x = (float)vertex->x / sx + (float)geometry.x;
         *y = (float)vertex->y / sy + (float)geometry.y;
+    }
+
+    void rescale(float width, float height)
+    {
+        int new_x_res = ceil((width / scaling)) * scaling;
+        int new_y_res = ceil((height / scaling)) * scaling;
+        if (new_x_res != x_res || new_y_res != y_res)
+        {
+            float old_sx = (float)x_res / (float)geometry.w;
+            float old_sy = (float)y_res / (float)geometry.h;
+            x_res = std::max<int>(new_x_res, scaling);
+            y_res = std::max<int>(new_y_res, scaling);
+            float new_sx = (float)x_res / (float)geometry.w;
+            float new_sy = (float)y_res / (float)geometry.h;
+            for (Vertex *vertex : vertices)
+            {    
+                float x = (float)vertex->x / old_sx + (float)geometry.x;
+                float y = (float)vertex->y / old_sy + (float)geometry.y;
+                vertex->x = new_sx * (x - (float)geometry.x); 
+                vertex->y = new_sy * (y - (float)geometry.y);
+            }
+            for (Edge *edge : edges)
+                edge->update();
+            for (Polygon *polygon : polygons)
+                polygon->update();
+            if (texture != NULL)
+            {
+                SDL_DestroyTexture(texture);
+                create_texture(renderer);
+            }
+        }
     }
 
     void clear()

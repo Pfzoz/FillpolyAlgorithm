@@ -21,8 +21,8 @@ const SDL_Color SDL_COLOR_TRANSPARENT = {0, 0, 0, 0};
 Scene *main_scene;
 SDL_Window *main_window;
 TTF_Font *default_font;
-Button *save_btn, *load_btn, *reset_btn;
-Label *message_text, *thickness_label;
+Button *save_btn, *load_btn, *reset_btn, *background_btn;
+Label *message_text, *thickness_label, *edit_message;
 CEditor ceditor;
 VEditor veditor;
 DialogBox *thickness_control;
@@ -46,6 +46,7 @@ void resize(int width, int height)
     cvw = (float)c_screen_width / 100;
     cvh = (float)c_screen_height / 100;
     canvas->set_geometry(30 * cvw, 5 * cvh, 65 * cvw, 90 * cvh);
+    edit_message->set_position(canvas->geometry.x + (canvas->geometry.w / 2) - edit_message->geometry.w / 2, 2.5 * cvh - edit_message->geometry.h / 2);
     message_text->set_position(canvas->geometry.x + (canvas->geometry.w / 2) - message_text->geometry.w / 2, 95 * cvh);
     // Colors
     float dialogs_area = 18 * cvw;
@@ -58,10 +59,12 @@ void resize(int width, int height)
     veditor.update_dimensions(18 * cvw, 10 * cvh);
     // Menu
     float menu_gap = 1 * cvh;
-    reset_btn->set_geometry((30 * cvw) / 2 - (10 * cvw) / 2, 50 * cvh, 10 * cvw, 5 * cvh);
+    reset_btn->set_geometry((30 * cvw) / 2 - (10 * cvw) / 2, color_wheel->geometry.y - reset_btn->geometry.h - menu_gap, 10 * cvw, 5 * cvh);
     thickness_control->set_dimensions(10 * cvw, 5 * cvh);
     thickness_control->set_position(reset_btn->geometry.x + (reset_btn->geometry.w / 2) - thickness_control->geometry.w / 2, reset_btn->geometry.y - thickness_control->geometry.h - menu_gap);
     thickness_label->set_position(thickness_control->geometry.x + thickness_control->geometry.w, thickness_control->geometry.y + (thickness_control->geometry.h / 2) - thickness_label->geometry.h / 2);
+    background_btn->set_dimensions(15 * cvw, 5 * cvh);
+    background_btn->set_position(reset_btn->geometry.x + (reset_btn->geometry.w / 2) - background_btn->geometry.w / 2, thickness_control->geometry.y - background_btn->geometry.h - menu_gap);
 }
 
 void canvas_onclick(int x, int y, bool hit)
@@ -253,6 +256,7 @@ int main(int argc, char *args[])
     /* Load Assets */
     load_assets();
     /* Create Components */
+    edit_message = new Label("Clique com o botão do meio do mouse em um vértice para edita-lo.", default_font, 19);
     thickness_label = new Label("Tamanho do Vértice", default_font, 19);
     thickness_control = new DialogBox("3", 22, default_font, 10 * VW, 4 * VH);
     canvas = new Canvas(65 * VW, 90 * VH);
@@ -261,6 +265,7 @@ int main(int argc, char *args[])
     veditor = VEditor((30 * VW) / 2 - veditor.geometry.w / 2, 90 * cvw - 10 * VH, 18 * VW, 10 * VH, default_font);
     color_wheel = new ColorWheel(ceditor.geometry.x + (ceditor.geometry.w / 2) - (5 * VW) / 2, ceditor.geometry.y - 10 * VW, 5 * VW);
     reset_btn = new Button("Limpar", 10 * VW, 5 * VH, default_font);
+    background_btn = new Button("Mudar Cor de Fundo", 20 * VW, 5 * VH, default_font);
     resize(SCREEN_WIDTH, SCREEN_HEIGHT);
     /* Components Setup */
     // Vertex Editor
@@ -287,12 +292,14 @@ int main(int argc, char *args[])
     /* Add Components */
     main_scene->add_component(canvas);
     main_scene->add_component(message_text);
+    main_scene->add_component(edit_message);
     main_scene->add_collection(&ceditor);
     main_scene->add_collection(&veditor);
     main_scene->add_component(color_wheel);
     main_scene->add_component(reset_btn);
     main_scene->add_component(thickness_control);
     main_scene->add_component(thickness_label);
+    main_scene->add_component(background_btn);
     main_scene->onresize(resize);
     /* Main Loop */
     while (!main_scene->quit)
