@@ -22,19 +22,22 @@ private:
         for (Vertex *vertex : vertices)
         {
             SDL_SetRenderDrawColor(renderer, vertex->color.r, vertex->color.g, vertex->color.b, vertex->color.a);
+            std::vector<SDL_Point> points;
+            points.push_back({vertex->x, vertex->y});
             for (int i = 0; i < vertex->thickness; i++)
             {
                 for (int j = vertex->x - i; j < (vertex->x + i); j++)
                 {
-                    SDL_RenderDrawPoint(renderer, j, vertex->y + i);
-                    SDL_RenderDrawPoint(renderer, j, vertex->y - i);
+                    points.push_back({j, vertex->y + i});
+                    points.push_back({j, vertex->y - i});
                 }
                 for (int j = vertex->y - i; j < (vertex->y + i); j++)
                 {
-                    SDL_RenderDrawPoint(renderer, vertex->x - i, j);
-                    SDL_RenderDrawPoint(renderer, vertex->x + i, j);
+                    points.push_back({vertex->x - i, j});
+                    points.push_back({vertex->x + i, j});
                 }
             }
+            SDL_RenderDrawPoints(renderer, points.data(), points.size());
         }
     }
 
@@ -193,8 +196,11 @@ public:
 
     void set_thickness(int thickness)
     {
+        this->thickness = thickness;
         for (Vertex *vertex : vertices)
+        {
             vertex->thickness = thickness;
+        }
         reload(renderer);
     }
 
@@ -351,7 +357,7 @@ public:
                 break;
             }
         }
-        // delete polygon TODO
+        delete polygon;
         reload(renderer);
     }
 

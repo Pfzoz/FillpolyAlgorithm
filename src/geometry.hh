@@ -92,7 +92,6 @@ public:
 
     ~Edge()
     {
-        delete a;
         delete b;
     }
 

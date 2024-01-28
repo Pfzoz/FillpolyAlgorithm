@@ -105,6 +105,13 @@ public:
         reload(renderer);
     }
 
+    void set_dimensions(float width)
+    {
+        geometry.w = width;
+        geometry.h = (geometry.w / 5) * (1 + polygons.size() / 5);
+        rescale();
+    }
+
     void clear()
     {
         polygons.clear();

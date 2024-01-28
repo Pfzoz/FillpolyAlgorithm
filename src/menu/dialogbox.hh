@@ -97,6 +97,18 @@ public:
         rescale(geometry.w, geometry.h);
     }
     
+    void set_text_color(SDL_Color color)
+    {
+        this->text_color = color;
+        reload(renderer);
+    }
+
+    void set_border_color(SDL_Color color)
+    {
+        this->border_color = color;
+        reload(renderer);
+    }
+
     void update_text(std::string text_content)
     {
         this->text_content = text_content;

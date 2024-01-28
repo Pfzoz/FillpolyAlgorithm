@@ -22,7 +22,7 @@ Scene *main_scene;
 SDL_Window *main_window;
 TTF_Font *default_font;
 Button *save_btn, *load_btn, *reset_btn, *background_btn;
-Label *message_text, *thickness_label, *edit_message;
+Label *message_text, *thickness_label, *edit_message, *delete_message;
 CEditor ceditor;
 VEditor veditor;
 PolygonList *polygon_list;
@@ -59,8 +59,6 @@ void resize(int width, int height)
     color_wheel->set_radius(5 * cvw);
     light_bar->set_dimensions(2 * cvw, color_wheel->geometry.h);
     light_bar->set_position(color_wheel->geometry.x + color_wheel->geometry.w + 1 * cvw, color_wheel->geometry.y);
-    // Vertex
-    veditor.update_dimensions(18 * cvw, 10 * cvh);
     // Menu
     float menu_gap = 1 * cvh;
     reset_btn->set_geometry((30 * cvw) / 2 - (10 * cvw) / 2, color_wheel->geometry.y - reset_btn->geometry.h - menu_gap, 10 * cvw, 5 * cvh);
@@ -73,7 +71,19 @@ void resize(int width, int height)
     bg_color_wheel->set_position(background_btn->geometry.x + (background_btn->geometry.w / 2) - bg_color_wheel->geometry.w / 2, background_btn->geometry.y - bg_color_wheel->geometry.h - menu_gap);
     bg_light_bar->set_dimensions(2 * cvw, bg_color_wheel->geometry.h);
     bg_light_bar->set_position(bg_color_wheel->geometry.x + bg_color_wheel->geometry.w + 1 * cvw, bg_color_wheel->geometry.y);
-    polygon_list->set_position((30 * cvw) / 2 - (10 * cvw) / 2, 10 * cvh);
+    polygon_list->set_dimensions(10 * cvw);
+    polygon_list->set_position((30 * cvw) / 2 - polygon_list->geometry.w / 2, 10 * cvh);
+    delete_message->set_position(polygon_list->geometry.x + (polygon_list->geometry.w / 2) - delete_message->geometry.w / 2, polygon_list->geometry.y - polygon_list->geometry.h);
+    if (veditor.is_selected)
+    {
+        int actual_x, actual_y;
+        canvas->get_vertex_pos(veditor.vertex, &actual_x, &actual_y);
+        veditor.update_geometry(actual_x - 9 * cvw, actual_y - 10 * cvh, 18 * cvw, 10 * cvh);
+    }
+    else
+    {
+        veditor.update_dimensions(18 * cvw, 10 * cvh);
+    }
 }
 
 void lightbar_onclick(int x, int y, bool hit)
@@ -291,7 +301,6 @@ void handle_thicknessinput(SDL_TextInputEvent event, Component *target)
         n = 1;
         dialog->update_text("1");
     }
-    canvas->thickness = n;
     canvas->set_thickness(n);
 }
 
@@ -303,6 +312,13 @@ void handle_on_bg_color_click(int x, int y, bool hit)
         bg_color_wheel->get_color(x, y, &red, &blue, &green);
         if (red != -1 && blue != -1 && green != -1)
         {
+            SDL_Color inverse = {255 - (Uint8)red, 255 - (Uint8)blue, 255 - (Uint8)green, 255};
+            veditor.red->set_text_color(inverse);
+            veditor.green->set_text_color(inverse);
+            veditor.blue->set_text_color(inverse);
+            veditor.red->set_border_color(inverse);
+            veditor.green->set_border_color(inverse);
+            veditor.blue->set_border_color(inverse);
             canvas->set_fill({(Uint8)red, (Uint8)blue, (Uint8)green, 255});
         }
     }
@@ -316,6 +332,8 @@ void polygon_list_onclick(int x, int y, bool hit)
         if (polygon != NULL)
         {
             canvas->delete_polygon(polygon);
+            if (veditor.is_selected)
+                veditor.unselect();
         }
     }
 }
@@ -344,8 +362,10 @@ int main(int argc, char *args[])
     /* Create Components */
     edit_message = new Label("Clique com o botão do meio do mouse em um vértice para edita-lo.", default_font, 19);
     thickness_label = new Label("Tamanho do Vértice", default_font, 19);
-    thickness_control = new DialogBox("3", 22, default_font, 10 * VW, 4 * VH);
+    delete_message = new Label("Clique em um polígono para deletá-lo.", default_font, 19);
+    thickness_control = new DialogBox("1", 22, default_font, 10 * VW, 4 * VH);
     canvas = new Canvas(65 * VW, 90 * VH);
+    canvas->set_thickness(1);
     message_text = new Label("Clique com o botão esquerdo para começar a desenhar um polígono.", default_font, 22);
     ceditor = CEditor((30 * VW) / 2 - ceditor.geometry.w / 2, 90 * cvw - 10 * VH, 18 * VW, 10 * VH, default_font);
     veditor = VEditor((30 * VW) / 2 - veditor.geometry.w / 2, 90 * cvw - 10 * VH, 18 * VW, 10 * VH, default_font);
@@ -402,6 +422,7 @@ int main(int argc, char *args[])
     main_scene->add_component(light_bar);
     main_scene->add_component(bg_light_bar);
     main_scene->add_component(polygon_list);
+    main_scene->add_component(delete_message);
     main_scene->onresize(resize);
     /* Main Loop */
     while (!main_scene->quit)

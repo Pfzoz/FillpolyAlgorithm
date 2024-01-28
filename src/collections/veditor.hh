@@ -48,7 +48,6 @@ public:
         components.push_back(blue);
     }
 
-
     void update_red()
     {
         vertex->color.r = std::stoi(red->get_text_content());
