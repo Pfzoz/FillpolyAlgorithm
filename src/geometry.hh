@@ -43,6 +43,7 @@ public:
 class Edge
 {
 public:
+    float close_val;
     Vertex *a, *b, *x_y_min_vertex, *x_y_max_vertex;
     std::string name;
     int y_min, x_y_min, y_max;
@@ -59,12 +60,12 @@ public:
         this->m_inversed = other->m_inversed;
     }
 
-    float get_x_max()
+    int get_x_max()
     {
         return a->x >= b->x ? a->x : b->x;
     }
 
-    float get_x_min()
+    int get_x_min()
     {
         return a->x <= b->x ? a->x : b->x;
     }

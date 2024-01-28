@@ -78,7 +78,7 @@ void resize(int width, int height)
     {
         int actual_x, actual_y;
         canvas->get_vertex_pos(veditor.vertex, &actual_x, &actual_y);
-        veditor.update_geometry(actual_x - 9 * cvw, actual_y - 10 * cvh, 18 * cvw, 10 * cvh);
+        veditor.update_geometry(actual_x - 9 * cvw, actual_y - 10 * cvh, 12 * cvw, 8 * cvh);
         veditor_color_wheel->set_radius(veditor.geometry.w / 4);
         veditor_color_wheel->set_position(veditor.geometry.x + (veditor.geometry.w / 2) - veditor_color_wheel->geometry.w / 2, veditor.geometry.y - veditor_color_wheel->geometry.h);
         veditor_lightbar->set_dimensions(2 * cvw, veditor_color_wheel->geometry.h);
@@ -86,7 +86,7 @@ void resize(int width, int height)
     }
     else
     {
-        veditor.update_dimensions(18 * cvw, 10 * cvh);
+        veditor.update_dimensions(12 * cvw, 8 * cvh);
         veditor_color_wheel->set_radius(veditor.geometry.w / 4);
         veditor_color_wheel->set_position(veditor.geometry.x + (veditor.geometry.w / 2) - veditor_color_wheel->geometry.w / 2, veditor.geometry.y - veditor_color_wheel->geometry.h);
         veditor_lightbar->set_dimensions(2 * cvw, veditor_color_wheel->geometry.h);
@@ -158,12 +158,24 @@ void canvas_onmiddle_click(int x, int y, bool hit)
     if (x > canvas->geometry.x && x < canvas->geometry.x + canvas->geometry.w && y > canvas->geometry.y && y < canvas->geometry.y + canvas->geometry.h)
     {
         Vertex *selected = canvas->first_vertex_touched(x, y, (c_screen_width + c_screen_height) * 0.012);
+        Edge *selected_edge = canvas->closest_edge_touched(x, y, (c_screen_width + c_screen_height) * 0.01);
         if (selected != NULL && selected != veditor.vertex)
         {
             int screen_x, screen_y;
             canvas->get_vertex_pos(selected, &screen_x, &screen_y);
             veditor.select_vertex(selected);
             veditor.update_position(screen_x - veditor.geometry.w / 2, screen_y - selected->thickness - veditor.geometry.h);
+            veditor_color_wheel->set_position(veditor.geometry.x + (veditor.geometry.w / 2) - veditor_color_wheel->geometry.w / 2, veditor.geometry.y - veditor_color_wheel->geometry.h);
+            veditor_lightbar->set_position(veditor_color_wheel->geometry.x + veditor_color_wheel->geometry.w, veditor_color_wheel->geometry.y);
+            veditor_color_wheel->set_visible(true);
+            veditor_lightbar->set_visible(true);
+        }
+        else if (selected_edge != NULL && selected_edge != veditor.edge)
+        {
+            int screen_x, screen_y;
+            canvas->get_edge_pos(selected_edge, &screen_x, &screen_y);
+            veditor.select_edge(selected_edge);
+            veditor.update_position(screen_x - veditor.geometry.w / 2, screen_y - selected_edge->a->thickness - veditor.geometry.h);
             veditor_color_wheel->set_position(veditor.geometry.x + (veditor.geometry.w / 2) - veditor_color_wheel->geometry.w / 2, veditor.geometry.y - veditor_color_wheel->geometry.h);
             veditor_lightbar->set_position(veditor_color_wheel->geometry.x + veditor_color_wheel->geometry.w, veditor_color_wheel->geometry.y);
             veditor_color_wheel->set_visible(true);
@@ -421,7 +433,7 @@ int main(int argc, char *args[])
     /* Load Assets */
     load_assets();
     /* Create Components */
-    edit_message = new Label("Clique com o botão do meio do mouse em um vértice para edita-lo.", default_font, 19);
+    edit_message = new Label("Clique com o botão do meio do mouse em um vértice/aresta para edita-lo.", default_font, 19);
     thickness_label = new Label("Tamanho do Vértice", default_font, 19);
     delete_message = new Label("Clique em um polígono para deletá-lo.", default_font, 19);
     thickness_control = new DialogBox("1", 22, default_font, 10 * VW, 4 * VH);

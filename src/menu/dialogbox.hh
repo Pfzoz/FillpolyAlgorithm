@@ -13,7 +13,7 @@ private:
     int ptsize = 14;
     std::string default_text = "";
     TTF_Font *font;
-    SDL_Color fill_color = {0, 0, 0, 0};
+    SDL_Color fill_color = {255, 255, 255, 255};
     SDL_Color border_color = {0, 0, 0, 255};
     SDL_Color text_color = {0, 0, 0, 255};
 
