@@ -7,5 +7,6 @@
 #include "canvas.hh"
 #include "colorwheel.hh"
 #include "lightbar.hh"
+#include "polygonlist.hh"
 
 #endif

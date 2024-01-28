@@ -50,6 +50,8 @@ public:
         y = y - geometry.y;
         float sy = ((float)y_res - 2) / (float)geometry.h;
         luminance = (255 / (geometry.h*sy)) * y;
+        if (luminance > 255) luminance = 255;
+        else if (luminance < 0) luminance = 0;
     }
 
     int get_luminance()

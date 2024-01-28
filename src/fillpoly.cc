@@ -25,6 +25,7 @@ Button *save_btn, *load_btn, *reset_btn, *background_btn;
 Label *message_text, *thickness_label, *edit_message;
 CEditor ceditor;
 VEditor veditor;
+PolygonList *polygon_list;
 DialogBox *thickness_control;
 ColorWheel *color_wheel, *bg_color_wheel;
 LightBar *light_bar, *bg_light_bar;
@@ -68,9 +69,11 @@ void resize(int width, int height)
     thickness_label->set_position(thickness_control->geometry.x + thickness_control->geometry.w, thickness_control->geometry.y + (thickness_control->geometry.h / 2) - thickness_label->geometry.h / 2);
     background_btn->set_dimensions(15 * cvw, 5 * cvh);
     background_btn->set_position(reset_btn->geometry.x + (reset_btn->geometry.w / 2) - background_btn->geometry.w / 2, thickness_control->geometry.y - background_btn->geometry.h - menu_gap);
+    bg_color_wheel->set_radius(5 * cvw);
     bg_color_wheel->set_position(background_btn->geometry.x + (background_btn->geometry.w / 2) - bg_color_wheel->geometry.w / 2, background_btn->geometry.y - bg_color_wheel->geometry.h - menu_gap);
-    bg_light_bar->set_dimensions(2 * cvw, color_wheel->geometry.h);
+    bg_light_bar->set_dimensions(2 * cvw, bg_color_wheel->geometry.h);
     bg_light_bar->set_position(bg_color_wheel->geometry.x + bg_color_wheel->geometry.w + 1 * cvw, bg_color_wheel->geometry.y);
+    polygon_list->set_position((30 * cvw) / 2 - (10 * cvw) / 2, 10 * cvh);
 }
 
 void lightbar_onclick(int x, int y, bool hit)
@@ -115,7 +118,7 @@ void canvas_onright_click(int x, int y, bool hit)
     {
         message_text->update_text("Clique com o botão esquerdo para começar a desenhar um polígono.");
         message_text->set_position(canvas->geometry.x + (canvas->geometry.w / 2) - message_text->geometry.w / 2, 95 * cvh);
-        canvas->close_polygon();
+        polygon_list->add_polygon(canvas->close_polygon());
     }
 }
 
@@ -162,6 +165,7 @@ void handle_reset_onlick(int x, int y, bool hit)
     if (hit)
     {
         canvas->clear();
+        polygon_list->clear();
         message_text->update_text("Clique com o botão esquerdo para começar a desenhar um polígono.");
         if (veditor.is_selected)
             veditor.unselect();
@@ -304,6 +308,18 @@ void handle_on_bg_color_click(int x, int y, bool hit)
     }
 }
 
+void polygon_list_onclick(int x, int y, bool hit)
+{
+    if (hit)
+    {
+        Polygon *polygon = polygon_list->remove_polygon(x, y);
+        if (polygon != NULL)
+        {
+            canvas->delete_polygon(polygon);
+        }
+    }
+}
+
 int main(int argc, char *args[])
 {
     /* Resources Init */
@@ -341,6 +357,7 @@ int main(int argc, char *args[])
     bg_light_bar->set_visible(false);
     reset_btn = new Button("Limpar", 10 * VW, 5 * VH, default_font);
     background_btn = new Button("Mudar Cor de Fundo", 20 * VW, 5 * VH, default_font);
+    polygon_list = new PolygonList(10 * cvw);
     resize(SCREEN_WIDTH, SCREEN_HEIGHT);
     /* Components Setup */
     // Vertex Editor
@@ -369,6 +386,7 @@ int main(int argc, char *args[])
     bg_color_wheel->set_onclick(handle_on_bg_color_click);
     light_bar->set_onclick(lightbar_onclick);
     bg_light_bar->set_onclick(bg_lightbar_onclick);
+    polygon_list->set_onclick(polygon_list_onclick);
     /* Add Components */
     main_scene->add_component(canvas);
     main_scene->add_component(message_text);
@@ -383,6 +401,7 @@ int main(int argc, char *args[])
     main_scene->add_component(bg_color_wheel);
     main_scene->add_component(light_bar);
     main_scene->add_component(bg_light_bar);
+    main_scene->add_component(polygon_list);
     main_scene->onresize(resize);
     /* Main Loop */
     while (!main_scene->quit)

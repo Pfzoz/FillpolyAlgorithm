@@ -258,7 +258,7 @@ public:
         reload(renderer);
     }
 
-    void close_polygon()
+    Polygon *close_polygon()
     {
         if (!creating_polygon)
         {
@@ -283,6 +283,7 @@ public:
         creating_polygon = false;
         current_vertices = 0;
         reload(renderer);
+        return polygon;
     }
 
     void get_vertex_pos(Vertex *vertex, int *x, int *y)
@@ -322,6 +323,36 @@ public:
                 create_texture(renderer);
             }
         }
+    }
+
+    void delete_polygon(Polygon *polygon)
+    {
+        for (int i = 0; i < polygons.size(); i++)
+        {
+            if (polygon == polygons[i])
+            {
+                for (Edge *edge : polygons[i]->edges)
+                {
+                    for (int j = 0; j < edges.size(); j++)
+                    {
+                        if (edge == edges[j])
+                        {
+                            for (int k = 0; k < vertices.size(); k++)
+                            {
+                                if (vertices[k] == edges[j]->a || vertices[k] == edges[j]->b)
+                                    vertices.erase(vertices.begin() + k--);
+                            }
+                            edges.erase(edges.begin() + j--);
+                            break;
+                        }
+                    }
+                }
+                polygons.erase(polygons.begin() + i--);
+                break;
+            }
+        }
+        // delete polygon TODO
+        reload(renderer);
     }
 
     void clear()
