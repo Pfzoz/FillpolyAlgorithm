@@ -18,6 +18,7 @@ private:
     std::vector<Edge *> edges, temp_edges;
     std::vector<Polygon *> polygons;
 
+    // Vertices
     void draw_vertices()
     {
         for (Vertex *vertex : vertices)
@@ -63,7 +64,7 @@ private:
         return x;
     }
 
-    // Scanline Algorithm
+    // Algoritmo Scanline
     void scanline_fill()
     {
         for (Polygon *polygon : polygons)
@@ -72,7 +73,7 @@ private:
             std::vector<Edge *> _temp_edges = polygon->edges;
             for (int y = polygon->y_min; y < polygon->y_max; y++)
             {
-                // Interception
+                // Interceptações
                 for (int i = 0; i < _temp_edges.size(); i++)
                 {
                     if (y == _temp_edges[i]->y_min)
@@ -88,7 +89,7 @@ private:
                         active_table.erase(active_table.begin() + i--);
                 }
                 std::sort(active_table.begin(), active_table.end(), table_comparison);
-                // Drawing
+                // Desenho
                 for (int i = 0; i + 1 < active_table.size(); i += 2)
                 {
                     if (active_table[i].x_y_min != active_table[i + 1].x_y_min)
@@ -141,7 +142,7 @@ private:
                             SDL_RenderDrawPoint(renderer, x, y);
                         }
                     }
-                    // Incrementing
+                    // Incremento
                     active_table[i].x_y_min = active_table[i].x_y_min + active_table[i].m_inversed;
                     active_table[i + 1].x_y_min = active_table[i + 1].x_y_min + active_table[i + 1].m_inversed;
                 }

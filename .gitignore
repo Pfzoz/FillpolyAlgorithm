@@ -1,2 +1,6 @@
 *.x
 *.o
+build
+build/
+build/*
+build/**

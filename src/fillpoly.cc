@@ -34,7 +34,7 @@ Canvas *canvas;
 void load_assets()
 {
     printf("Loading Assets...");
-    default_font = TTF_OpenFont("/home/pedrozoz/Repositories/University/cg/fillpoly/assets/fonts/open-sans/OpenSans-Regular.ttf", 14);
+    default_font = TTF_OpenFont("assets/fonts/open-sans/OpenSans-Regular.ttf", 14);
     if (default_font == NULL)
         std::exit(1);
     printf("Assets loaded!\n");
@@ -42,7 +42,6 @@ void load_assets()
 
 void resize(int width, int height)
 {
-    // canvas->clear();
     c_screen_width = width;
     c_screen_height = height;
     cvw = (float)c_screen_width / 100;
@@ -514,7 +513,10 @@ int main(int argc, char *args[])
         main_scene->poll();
         main_scene->render();
     }
+    printf("Hey\n");
     main_scene->destroy();
+    printf("Hey2\n");
     delete main_scene;
+    printf("Hey3\n");
     return 0;
 }

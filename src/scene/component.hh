@@ -165,7 +165,8 @@ public:
     }
     virtual void destroy()
     {
-        SDL_DestroyTexture(texture);
+        if (texture != NULL)
+            SDL_DestroyTexture(texture);
     }
     virtual void update_text(std::string text)
     {
