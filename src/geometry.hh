@@ -48,6 +48,7 @@ public:
     std::string name;
     int y_min, x_y_min, y_max;
     float m_inversed;
+    SDL_Color color = {0, 0, 0, 255};
 
     Edge(const Edge *other)
     {

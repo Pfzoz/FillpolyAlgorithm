@@ -20,7 +20,7 @@ public:
     bool is_selected = false;
     DialogBox *red, *green, *blue;
     Vertex *vertex = NULL;
-    Edge *edge = NULL;
+    Polygon *polygon = NULL;
     SDL_Rect geometry;
 
     VEditor(){};
@@ -55,8 +55,10 @@ public:
             vertex->color.r = std::stoi(red->get_text_content());
         else
         {
-            edge->a->color.r = std::stoi(red->get_text_content());
-            edge->b->color.r = std::stoi(red->get_text_content());
+            for (Edge *edge : polygon->edges)
+                edge->color.r = std::stoi(red->get_text_content());
+            // polygon->a->color.r = std::stoi(red->get_text_content());
+            // polygon->b->color.r = std::stoi(red->get_text_content());
         }
     }
 
@@ -66,8 +68,10 @@ public:
             vertex->color.g = std::stoi(green->get_text_content());
         else
         {
-            edge->a->color.g = std::stoi(green->get_text_content());
-            edge->b->color.g = std::stoi(green->get_text_content());
+            for (Edge *edge : polygon->edges)
+                edge->color.g = std::stoi(green->get_text_content());
+            // polygon->a->color.g = std::stoi(green->get_text_content());
+            // polygon->b->color.g = std::stoi(green->get_text_content());
         }
     }
     void update_blue()
@@ -76,8 +80,10 @@ public:
             vertex->color.b = std::stoi(blue->get_text_content());
         else
         {
-            edge->a->color.b = std::stoi(blue->get_text_content());
-            edge->b->color.b = std::stoi(blue->get_text_content());
+            for (Edge *edge : polygon->edges)
+                edge->color.b = std::stoi(blue->get_text_content());
+            // polygon->a->color.b = std::stoi(blue->get_text_content());
+            // polygon->b->color.b = std::stoi(blue->get_text_content());
         }
     }
 
@@ -116,7 +122,7 @@ public:
     void select_vertex(Vertex *vertex)
     {
         is_selected = true;
-        this->edge = NULL;
+        this->polygon = NULL;
         this->vertex = vertex;
         red->update_text(std::to_string(vertex->color.r));
         green->update_text(std::to_string(vertex->color.g));
@@ -126,14 +132,14 @@ public:
         blue->set_visible(true);
     }
 
-    void select_edge(Edge *edge)
+    void select_polygon(Polygon *polygon)
     {
         is_selected = true;
         this->vertex = NULL;
-        this->edge = edge;
-        red->update_text(std::to_string((edge->a->color.r + edge->b->color.r) / 2));
-        green->update_text(std::to_string((edge->a->color.g + edge->b->color.g) / 2));
-        blue->update_text(std::to_string((edge->a->color.b + edge->b->color.b) / 2));
+        this->polygon = polygon;
+        red->update_text(std::to_string(polygon->edges[0]->color.r));
+        green->update_text(std::to_string(polygon->edges[0]->color.g));
+        blue->update_text(std::to_string(polygon->edges[0]->color.b));
         red->set_visible(true);
         green->set_visible(true);
         blue->set_visible(true);
@@ -143,7 +149,7 @@ public:
     {
         is_selected = false;
         this->vertex = NULL;
-        this->edge = NULL;
+        this->polygon = NULL;
         red->set_visible(false);
         green->set_visible(false);
         blue->set_visible(false);

@@ -24,22 +24,18 @@ private:
         for (Vertex *vertex : vertices)
         {
             SDL_SetRenderDrawColor(renderer, vertex->color.r, vertex->color.g, vertex->color.b, vertex->color.a);
-            std::vector<SDL_Point> points;
-            points.push_back({vertex->x, vertex->y});
-            for (int i = 0; i < vertex->thickness; i++)
-            {
-                for (int j = vertex->x - i; j < (vertex->x + i); j++)
-                {
-                    points.push_back({j, vertex->y + i});
-                    points.push_back({j, vertex->y - i});
-                }
-                for (int j = vertex->y - i; j < (vertex->y + i); j++)
-                {
-                    points.push_back({vertex->x - i, j});
-                    points.push_back({vertex->x + i, j});
-                }
-            }
-            SDL_RenderDrawPoints(renderer, points.data(), points.size());
+            SDL_RenderDrawPoint(renderer, vertex->x, vertex->y);
+        }
+    }
+
+    // Edges
+    void draw_edges()
+    {
+        for (Edge *edge : edges)
+        {
+            SDL_SetRenderDrawColor(renderer, edge->color.r, edge->color.g, edge->color.b, edge->color.a);
+            for (int i = 0; i < thickness; i++)
+                SDL_RenderDrawLine(renderer, edge->a->x, edge->a->y + i, edge->b->x, edge->b->y + i);
         }
     }
 
@@ -164,6 +160,8 @@ private:
         scanline_fill();
         // Vertices
         draw_vertices();
+        // Edges
+        draw_edges();
         SDL_SetRenderTarget(renderer, NULL);
     }
 
@@ -217,7 +215,6 @@ public:
         float sy = (float)y_res / (float)geometry.h;
         first = new Vertex(sx * (x - (float)geometry.x), sy * (y - (float)geometry.y));
         first->color = color;
-        first->thickness = thickness;
         this->vertices.push_back(first);
         current_vertices++;
         reload(renderer);
@@ -255,7 +252,6 @@ public:
         float sx = (float)x_res / (float)geometry.w;
         float sy = (float)y_res / (float)geometry.h;
         Vertex *vertex = new Vertex(sx * (x - (float)geometry.x), sy * (y - (float)geometry.y));
-        vertex->thickness = thickness;
         vertex->color = color;
         vertices.push_back(vertex);
         Edge *edge = new Edge(vertices[vertices.size() - 2], vertices[vertices.size() - 1]);
@@ -389,42 +385,48 @@ public:
         return a->close_val < b->close_val;
     }
 
-    Edge *closest_edge_touched(int x, int y, float e = 0)
+    void get_poly_center(Polygon *polygon, int *x, int *y)
+    {
+        polygon->update();
+        float sx = (float)x_res / (float)geometry.w;
+        float sy = (float)y_res / (float)geometry.h;
+        float max_y = (float)polygon->y_max / sy + (float)geometry.h;
+        float min_y = (float)polygon->y_min / sy + (float)geometry.h;
+        float max_x = (float)polygon->get_x_max() / sy + (float)geometry.w;
+        float min_x = (float)polygon->get_x_min() / sy + (float)geometry.w;
+        *x = (max_y - min_y) / 2;
+        *y = (max_x - min_x) / 2;
+    }
+
+    Polygon *closest_edge_touched(int x, int y, float e = 0)
     {
         float sx = (float)x_res / (float)geometry.w;
         float sy = (float)y_res / (float)geometry.h;
         x = sx * ((float)x - (float)geometry.x);
         y = sy * ((float)y - (float)geometry.y);
         std::vector<Edge *> touched_edges;
-        for (Edge *edge : edges)
+        for (Polygon *polygon : polygons)
         {
-            float m = ((float)edge->a->y - (float)edge->b->y) / ((float)edge->a->x - (float)edge->b->x);
-            float b = edge->b->y - m * edge->b->x;
-            if (x < edge->get_x_min() - (int)e || x > edge->get_x_max() + (int)e || y < edge->y_min - (int)e || y > edge->y_max + (int)e)
-                continue;
-            float dist = std::abs((float)y - (x * m + b));
-            float dist2 = std::abs((float)x - ((float)y - b) / m);
-            if (dist <= e && dist2 <= e)
+            for (Edge *edge : polygon->edges)
             {
-                touched_edges.push_back(edge);
-                edge->close_val = dist;
-            }
-            else if ((float)edge->a->x - (float)edge->b->x == 0)
-            {
-                if (std::abs(y - edge->y_max) <= e)
+                float m = ((float)edge->a->y - (float)edge->b->y) / ((float)edge->a->x - (float)edge->b->x);
+                float b = edge->b->y - m * edge->b->x;
+                if (x < edge->get_x_min() - (int)e || x > edge->get_x_max() + (int)e || y < edge->y_min - (int)e || y > edge->y_max + (int)e)
+                    continue;
+                float dist = std::abs((float)y - (x * m + b));
+                float dist2 = std::abs((float)x - ((float)y - b) / m);
+                if (dist <= e && dist2 <= e)
                 {
-                    touched_edges.push_back(edge);
-                    edge->close_val = std::abs(y - edge->y_max);
+                    return polygon;
+                }
+                else if ((float)edge->a->x - (float)edge->b->x == 0)
+                {
+                    if (std::abs(y - edge->y_max) <= e)
+                        return polygon;
                 }
             }
         }
-        if (touched_edges.size())
-        {
-            std::sort(touched_edges.begin(), touched_edges.end(), closest_edge_comparison);
-            return touched_edges[0];
-        }
-        else
-            return NULL;
+        return NULL;
     }
 
     Vertex *first_vertex_touched(int x, int y, float square_area = 0)

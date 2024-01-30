@@ -157,7 +157,7 @@ void canvas_onmiddle_click(int x, int y, bool hit)
     if (x > canvas->geometry.x && x < canvas->geometry.x + canvas->geometry.w && y > canvas->geometry.y && y < canvas->geometry.y + canvas->geometry.h)
     {
         Vertex *selected = canvas->first_vertex_touched(x, y, (c_screen_width + c_screen_height) * 0.012);
-        Edge *selected_edge = canvas->closest_edge_touched(x, y, (c_screen_width + c_screen_height) * 0.01);
+        Polygon *selected_polygon = canvas->closest_edge_touched(x, y, (c_screen_width + c_screen_height) * 0.01);
         if (selected != NULL && selected != veditor.vertex)
         {
             int screen_x, screen_y;
@@ -169,12 +169,14 @@ void canvas_onmiddle_click(int x, int y, bool hit)
             veditor_color_wheel->set_visible(true);
             veditor_lightbar->set_visible(true);
         }
-        else if (selected_edge != NULL && selected_edge != veditor.edge)
+        else if (selected_polygon != NULL && selected_polygon != veditor.polygon)
         {
             int screen_x, screen_y;
-            canvas->get_edge_pos(selected_edge, &screen_x, &screen_y);
-            veditor.select_edge(selected_edge);
-            veditor.update_position(screen_x - veditor.geometry.w / 2, screen_y - selected_edge->a->thickness - veditor.geometry.h);
+            canvas->get_poly_center(selected_polygon, &screen_x, &screen_y);
+            screen_x = x;
+            screen_y = y;
+            veditor.select_polygon(selected_polygon);
+            veditor.update_position(screen_x - veditor.geometry.w / 2, screen_y - veditor.geometry.h);
             veditor_color_wheel->set_position(veditor.geometry.x + (veditor.geometry.w / 2) - veditor_color_wheel->geometry.w / 2, veditor.geometry.y - veditor_color_wheel->geometry.h);
             veditor_lightbar->set_position(veditor_color_wheel->geometry.x + veditor_color_wheel->geometry.w, veditor_color_wheel->geometry.y);
             veditor_color_wheel->set_visible(true);
@@ -433,7 +435,7 @@ int main(int argc, char *args[])
     load_assets();
     /* Create Components */
     edit_message = new Label("Clique com o botão do meio do mouse em um vértice/aresta para edita-lo.", default_font, 19);
-    thickness_label = new Label("Tamanho do Vértice", default_font, 19);
+    thickness_label = new Label("Tamanho da Aresta", default_font, 19);
     delete_message = new Label("Clique em um polígono para deletá-lo.", default_font, 19);
     thickness_control = new DialogBox("1", 22, default_font, 10 * VW, 4 * VH);
     canvas = new Canvas(65 * VW, 90 * VH);
@@ -480,6 +482,7 @@ int main(int argc, char *args[])
     thickness_control->set_default_text("1");
     thickness_control->set_ontextinput(handle_thicknessinput);
     thickness_control->set_onmotion(thickness_control_animation);
+    thickness_control->set_visible(true);
     background_btn->set_onclick(handle_background_btn_onclick);
     background_btn->set_onmotion(background_btn_animation);
     bg_color_wheel->set_onclick(handle_on_bg_color_click);
@@ -513,10 +516,7 @@ int main(int argc, char *args[])
         main_scene->poll();
         main_scene->render();
     }
-    printf("Hey\n");
     main_scene->destroy();
-    printf("Hey2\n");
     delete main_scene;
-    printf("Hey3\n");
     return 0;
 }
